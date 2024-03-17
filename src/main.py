@@ -1,6 +1,5 @@
 import pygame
-from datetime import datetime
-from datetime import date
+from datetime import datetime,date,timedelta
 
 # Initialize pygame
 pygame.init()
@@ -47,7 +46,7 @@ class SideButton:
 
 # Create a font object
 font = pygame.font.Font(None, 24)
-datefont = pygame.font.Font(None, 40)
+datefont = pygame.font.Font(None, 30)
 
 #dateTime
 def draw_monthYear():
@@ -63,6 +62,37 @@ def draw_monthYear():
     text_surface = datefont.render(month_string, True, (0, 0, 0))
     # Blit the text surface onto the screen
     screen.blit(text_surface, (0, 20))  # Adjust the position as needed
+
+def get_monday_date():
+    # Get today's date
+    today = datetime.now()
+    # Calculate the difference between today's weekday and Monday (0: Monday, 1: Tuesday, ..., 6: Sunday)
+    days_to_monday = today.weekday()
+    # Subtract the difference to get the date of Monday of the current week
+    monday_date = today - timedelta(days=days_to_monday)
+    return monday_date
+
+def draw_dayDate(x, y):
+    # Get the date of Monday of the current week
+    monday_date = get_monday_date()
+    # Iterate over each day of the week
+    for i in range(7):
+        # Get the date for the current day in the loop
+        current_date = monday_date + timedelta(days=i)
+
+        # Format the date string
+        day_DateString = current_date.strftime("%a %d")
+        # Render the text
+        text_surface = datefont.render(day_DateString, True, (0, 0, 0))
+
+        # Blit the text surface onto the screen
+        # Change colour of today's date to highlight it
+        now = datetime.now()
+        if (current_date.day == now.day):
+            text_surface = datefont.render(day_DateString, True, (255, 0, 0))  # Change color to red
+        screen.blit(text_surface, (x + (125 * i), y))
+
+
 
 # Initialize Variables
 sideBar = pygame.Rect(0,0,150,600)
@@ -102,8 +132,7 @@ def handle_input():
 
 
 def update():
-    #get datetime
-    global now,month,current_time,PlannerButtons
+    global PlannerButtons
 
     pygame.display.update()
     for button in PlannerButtons:
@@ -128,6 +157,7 @@ def draw():
     pygame.draw.rect(screen,(169,169,169),dayBar)
 
     draw_monthYear()
+    draw_dayDate(150,30)
 
     for button in PlannerButtons:
         button.draw(screen)
