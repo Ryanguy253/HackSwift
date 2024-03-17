@@ -15,8 +15,10 @@ class TimeTable:
         self.width=0
         self.height = 0
         self.events = 0
+        self.fixed_events = []
+        self.dynamic_events = []
 
-    def get_empty_time_ranges(self):
+    def sort_events(self):
         pass
 
     def add_fixed_event(self, event: FixedEvent):
@@ -37,5 +39,8 @@ class TimeTable:
     def get_dynamic_events_by_week(self, week: datetime.date):
         pass
 
+    def get_empty_time_ranges(self):
+        pass
+    
     def shedule_dynamic_events(self):
         pass
