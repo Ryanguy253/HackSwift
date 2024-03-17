@@ -9,19 +9,21 @@ class Priority(Enum):
 
 class Event:
     # Assumption that events are only for a single day
-    def __init__(self, name: str, 
+    counter = 0
+    def __init__(self, name: str,
                  start_time: datetime.time, 
                  date: datetime.date, 
                  location: str, 
                  description: str,
                  priority_tag: Priority = Priority.LOW):
-        
         self._name = name
+        self._id = Event.counter
         self._start_time = start_time
         self._date = date
         self._location = location
         self._description = description
         self._priority_tag = priority_tag
+        Event.counter += 1
     
     # Getters / Setters
     def get_name(self):
@@ -41,6 +43,12 @@ class Event:
     
     def get_priority(self):
         return self._priority_tag
+    
+    def get_counter(self):
+        return Event.counter
+    
+    def get_id(self):
+        return self._id
     
     def set_name(self, name: str):
         self._name = name
