@@ -732,6 +732,39 @@ PlannerButtons = [sortButton, inputButton,deleteButton,editButton]
 UserGUIObject = UserInputGUI()
 print(UserGUIObject.FixDict)
 
+FixArray = []
+DymArray = []
+# Initialise Dummy Events
+
+for i in range(0,11,2):
+    a = i+1
+    Event = FixedEvent(name='Fix'+str(i),
+                       start_time=datetime.time(i,0,0),
+                       end_time=datetime.time(i,30,0),
+                       date=datetime.datetime.now(),
+                       recur_period=0,
+                       recur_cycle=0,
+                       location='Fix'+str(i),
+                       description='Fix'+str(i),
+                       priority_tag=Priority(i%4))
+    FixArray.append(Event)
+
+    Event = DynamicEvent(name='Dym'+str(a),
+                         duration=datetime.time(0,30,0),
+                         expiry_date=datetime.datetime.now(),
+                         location='Fix'+str(i),
+                         description='Dym'+str(a),
+                         priority_tag=Priority(a%4))
+    Event._start_time = datetime.time(a,0,0)
+    Event._date = datetime.datetime.now()
+    DymArray.append(Event)
+
+for item in FixArray:
+        item.print_event()
+for item in DymArray:
+        item.print_event()
+
+
 # Input handling
 def handle_input():
     global running, window_height, window_width, screen,PlannerButtons, UserEventGUI

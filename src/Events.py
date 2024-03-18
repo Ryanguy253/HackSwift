@@ -64,10 +64,8 @@ class Event:
 
     # For Checking Events
     def print_event(self):
-        print(self.get_name())
-        print(self.get_location())
-        print(self.get_description())
-        print(self.get_priority())
+        print(self.get_name(),self._date,self._start_time,self.get_priority())
+
 
 
 # This actually violates Liskov Substitution Principle, but we're not gonna store events anyways, we're storing FixedEvents and DynamicEvents seperately
