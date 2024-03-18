@@ -20,6 +20,7 @@ class Priority(Enum):
 
 class Event:
     # Assumption that events are only for a single day
+    counter = 0
     def __new__(cls, *args, **kwargs):
         cls.counter += 1
         return super().__new__(cls)
@@ -126,7 +127,7 @@ class FixedEvent(Event):
                  description: str,
                  priority_tag: Priority = Priority.LOW):
 
-        Event.__init__(self, name, start_time, date, location, description, priority_tag)
+        Event.__init__(self, name, start_time, end_time, date, location, description, priority_tag)
         self._end_time = end_time
         self._recur_period = recur_period
         self._recur_cycle = recur_cycle
@@ -167,7 +168,7 @@ class DynamicEvent(Event):
                  description: str, 
                  priority_tag: Priority = Priority.LOW):
 
-        Event.__init__(self, name, start_time=None, date=None, location=location, description=description, priority_tag=priority_tag)
+        Event.__init__(self, name, start_time=None, end_time=None, date=None, location=location, description=description, priority_tag=priority_tag)
         self._duration = duration
         self._expiry_date = expiry_date
 
