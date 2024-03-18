@@ -630,7 +630,7 @@ class UserInputGUI(object):
                 else:
                     Leap = 0
                 MthDay = int(Month.text) - 1
-                MaxDays = self.DD_MthDay[MthDay] if MthDay != 2 else self.DD_MthDay[MthDay] + Leap
+                MaxDays = self.DD_MthDay[MthDay] if MthDay != 1 else self.DD_MthDay[MthDay] + Leap
                 Day.MaxCycle = MaxDays
                 Day.Cycle = 0
                 Day.text = '01'
