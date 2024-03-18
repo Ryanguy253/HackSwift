@@ -1,9 +1,9 @@
 import Events
-from Events import Priority, FixedEvent, DynamicEvent,Event
+from Events import Priority, FixedEvent, DynamicEvent, Event
 import datetime
 import pygame
 from enum import Enum
-from datetime import date,time,timedelta
+from datetime import date, time, timedelta
 
 
 # TODO: Complete TimeTable class
@@ -14,11 +14,11 @@ from datetime import date,time,timedelta
 # Load Factor = 5 * Min( [Free Time - Work : weekdays] ) + 2 * WeekEndScaleFactor * Min( [Free Time - Work : weekends] )
 
 class TimeTable:
-    def __init__(self,x_pos,y_pos):
+    def __init__(self, x_pos, y_pos):
         self.x = x_pos
         self.y = y_pos
         self.id_counter = 0
-        self.width=0
+        self.width = 0
         self.height = 0
         self.events = 0
         self.fixed_events = []
@@ -30,7 +30,7 @@ class TimeTable:
     def add_fixed_event(self, event: FixedEvent):
         event._unique_id = self.id_counter
         self.fixed_events.append(event)
-        self.id_counter +=1
+        self.id_counter += 1
         pass
 
     def add_dynamic_event(self, event: DynamicEvent):
@@ -45,10 +45,10 @@ class TimeTable:
         for event in self.fixed_events:
             if event._unique_id == id:
                 pass
-        pass # Check equality id
+        pass  # Check equality id
 
     def remove_dynamic_event(self, id: int):
-        pass # Check equality id
+        pass  # Check equality id
 
     def get_fixed_events_by_week(self, week: datetime.date):
         pass
@@ -58,11 +58,9 @@ class TimeTable:
 
     def get_empty_time_ranges(self):
         pass
-    
+
     def shedule_dynamic_events(self):
         pass
-
-
 
 
 class Priority(Enum):
@@ -71,31 +69,8 @@ class Priority(Enum):
     HIGH = 2
     URGENT = 3
 
-class event():
-    def init(self,
-                 name: str,
-                 start_time: datetime.time,
-                 end_time: datetime.time,
-                 recur_period: int,
-                 date: datetime.date,
-                 location: str,
-                 description: str,
-                 duration: str,
-                 expiry_date: datetime.date,
-                 priority_tag: Priority = Priority.LOW):
-        self._name = name
-        self._start_time = start_time
-        self._date = date
-        self._location = location
-        self._description = description
-        self._priority_tag = priority_tag
-        self._end_time = end_time
-        self._recur_period = recur_period
-        self._duration = duration
-        self._expiry_date = expiry_date
 
-
-def testEvent(FixArray,DymArray):
+def testEvent(FixArray, DymArray):
     for i in range(0, 11, 2):
         a = i + 1
         Event = FixedEvent(name='Fix' + str(i),
@@ -124,25 +99,93 @@ def testEvent(FixArray,DymArray):
     for item in DymArray:
         item.print_event()
 
-
 class timetableBox():
-    def init(self, x, y, height, width,
-                 color,name,start_time,
-                 priority): #, date,location, description,end_time, duration,expiry_date):
+    def __init__(self, x, y, height, width, Event,screen):
         box_image = pygame.Surface((height, width))
-        box_image.fill(color)
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
         self.image = box_image
         self.rect = pygame.Rect(x, y, width, height)
-        self.nameText = name
-        self.start_timeText = start_time
-        self.priority = priority
-        self.dateText = date
-        # self.locationText = location
-        # self.descriptionText = description
-        # self.end_timeText = end_time
-        # self.durationText = duration
-        # self.expiry_dateText = expiry_date
+
+        self.nameText = Event.get_name()
+        self.start_timeText = Event.get_start_time()
+        self.priority = Event.get_priority()
+        self.dateText = Event.get_date()
+        self.screen = screen
+        self.font = pygame.font.Font(None, 24)
+        self.locationText = Event.get_location()
+        self.descriptionText = Event.get_description()
+        self.isHovered = False
+        #self.end_timeText =
+        #self.durationText =
+        #self.expiry_dateText =
+
+    def draw(self,mouse_position):
+        Yellow = (255, 255, 0)
+        Green = (0, 255, 0)
+        Red = (255, 0, 0)
+        DarkGreen = (0, 128, 0)
+        colour = Green
+        # classify priority
+
+        if self.priority == Priority(0):
+            colour = DarkGreen
+        elif self.priority == Priority(1):
+            colour = Green
+        elif self.priority == Priority(2):
+            colour = Yellow
+        elif self.priority == Priority(3):
+            colour = Red
+
+        pygame.draw.rect(self.screen, colour, self.rect)
+
+        if self.isHovered:
+            # Adjust font size to fit text within box
+            font_size = 15
+            font = pygame.font.Font(None, font_size)
+
+            # Split description into multiple lines
+            description_lines = self.split_text_into_lines(str(self.descriptionText), font, self.width)
+
+            # Render each line of description text
+            y_offset = -10
+            for line in description_lines:
+                description_text_surface = font.render(line, True, (0, 0, 0))
+                text_rect = description_text_surface.get_rect(midtop=(self.rect.centerx, self.rect.centery + y_offset))
+                self.screen.blit(description_text_surface, text_rect)
+                y_offset += font.get_height()  # Increment y offset for next line
+
+        else:
+            text_surface = self.font.render(self.nameText, True, (0, 0, 0))
+            text_rect = text_surface.get_rect(center=(self.rect.centerx, self.rect.centery - 12))
+            self.screen.blit(text_surface, text_rect)
+
+            text_surface = self.font.render(str(self.start_timeText), True, (0, 0, 0))
+            text_rect = text_surface.get_rect(midtop=(self.rect.centerx, self.rect.centery -0))
+            self.screen.blit(text_surface, text_rect)
+
+            text_surface = self.font.render(str(self.locationText), True, (0, 0, 0))
+            text_rect = text_surface.get_rect(midtop=(self.rect.centerx, self.rect.centery + 20 ))
+            self.screen.blit(text_surface, text_rect)
+
+    def split_text_into_lines(self, text, font, max_width):
+        lines = []
+        words = text.split()
+        current_line = ""
+        for word in words:
+            if font.size(current_line + word)[0] <= max_width:
+                current_line += (word + " ")
+            else:
+                lines.append(current_line)
+                current_line = word + " "
+        lines.append(current_line)  # Add the last line
+        return lines
 
 
 
 
+    def is_hovered_over(self, mouse_pos):
+        button_rect = pygame.Rect(self.x, self.y, self.width, self.height)
+        return button_rect.collidepoint(mouse_pos)

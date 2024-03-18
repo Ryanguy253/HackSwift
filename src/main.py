@@ -1,8 +1,9 @@
 import pygame
-from datetime import datetime,date,timedelta
-from math import sqrt,floor
+from datetime import datetime, date, timedelta
+from math import sqrt, floor
 from Events import *
-from TimeTable import TimeTable as TTable
+from TimeTable import TimeTable as TTable, testEvent
+from TimeTable import timetableBox
 
 # Initialize pygame
 pygame.init()
@@ -17,30 +18,39 @@ pygame.display.set_caption("Planner")
 
 # Colours
 Dark_Gray = (64, 64, 64)
-Light_Gray=  (192, 192, 192)
-Slate_Gray= (112, 128, 144)
-Charcoal= (54, 69, 79)
-Steel_Blue= (70, 130, 180)
-Navy_Blue= (0, 0, 128)
-Royal_Blue= (65, 105, 225)
-Deep_Green= (0, 100, 0)
-Olive_Green= (128, 128, 0)
-Burgundy= (128, 0, 32)
+Light_Gray = (192, 192, 192)
+Slate_Gray = (112, 128, 144)
+Charcoal = (54, 69, 79)
+Steel_Blue = (70, 130, 180)
+Navy_Blue = (0, 0, 128)
+Royal_Blue = (65, 105, 225)
+Deep_Green = (0, 100, 0)
+Olive_Green = (128, 128, 0)
+Burgundy = (128, 0, 32)
 
-#Events
+# Events
 DymEvents = []
 FixEvents = []
+# make test events
+temp = Event = DynamicEvent(name='Tutorial 1',
+                            duration=datetime.time(0, 30, 0),
+                            expiry_date=datetime.datetime.now(),
+                            location='TR 15',
+                            description='I LOVE MATHS, MATHS IS MY FAVOURITE THING IN THE WHOLE WIDE WORLD',
+                            priority_tag=Priority(2))
+DymEvents.append(temp)
 
-#Testing
-Recty = 100
-Rect = (400,Recty,100,100)
+# timetable boxes
+timetable_y_pos = 50
 
-#UserGUI Variables
-font_size = int(0.02* sqrt(window_width**2 + window_height**2))
+# UserGUI Variables
+font_size = int(0.02 * sqrt(window_width ** 2 + window_height ** 2))
 Small_font = pygame.font.Font(None, int(0.8 * font_size))
 test_font = pygame.font.Font(None, font_size)
 UserEventGUI = False
 
+# scrolling
+SCROLL_SPEED = 10
 
 
 # Button
@@ -50,7 +60,7 @@ class SideButton:
         self.y = position_y
         self.height = height_y
         self.width = width_x
-        self.colour = (200,0,0)
+        self.colour = (200, 0, 0)
         self.text = text
         self.surface = pygame.Surface((width_x, height_y))
         self.isClicked = False
@@ -75,18 +85,19 @@ class SideButton:
         button_rect = pygame.Rect(self.x, self.y, self.width, self.height)
         return button_rect.collidepoint(mouse_pos)
 
-#scroll bar
+
+# scroll bar
 class scrollBar:
     def __init__(self, position_x, position_y, width_x, height_y):
         self.x = position_x
         self.y = position_y
         self.width = width_x
         self.height = height_y
-        #self.icon = icon
+        # self.icon = icon
         self.isHovered = False
         self.isClicked = False
-        self.colour = (220,220,220)
-        self.bar_colour = (169,169,169)
+        self.colour = (220, 220, 220)
+        self.bar_colour = (169, 169, 169)
         self.bar_pos_x = position_x
         self.bar_pos_y = position_y
         self.bar_height = 75
@@ -94,51 +105,55 @@ class scrollBar:
         self.offset_x = 0
         self.offset_y = 0
 
-    def draw(self,screen):
-        if(self.isHovered):
-            self.bar_colour = (64,64,64)
+    def draw(self, screen):
+        if (self.isHovered):
+            self.bar_colour = (64, 64, 64)
         else:
-            self.bar_colour = (169,169,169)
+            self.bar_colour = (169, 169, 169)
         pygame.draw.rect(screen, self.colour, pygame.Rect(self.x, self.y, self.width, self.height))
-        pygame.draw.rect(screen,self.bar_colour,pygame.Rect(self.bar_pos_x,self.bar_pos_y,self.width,self.bar_height))
+        pygame.draw.rect(screen, self.bar_colour,
+                         pygame.Rect(self.bar_pos_x, self.bar_pos_y, self.width, self.bar_height))
 
-    def is_hovered_over(self,mouse_pos):
-        scroll_bar_rect = pygame.Rect(self.bar_pos_x,self.bar_pos_y,self.width,self.bar_height)
-        return scroll_bar_rect.collidepoint(mouse_pos)
-
-    def is_dragged(self,mouse_pos):
+    def is_hovered_over(self, mouse_pos):
         scroll_bar_rect = pygame.Rect(self.bar_pos_x, self.bar_pos_y, self.width, self.bar_height)
         return scroll_bar_rect.collidepoint(mouse_pos)
 
-    def detect_scroll(self,mouse_pos):
+    def is_dragged(self, mouse_pos):
+        scroll_bar_rect = pygame.Rect(self.bar_pos_x, self.bar_pos_y, self.width, self.bar_height)
+        return scroll_bar_rect.collidepoint(mouse_pos)
+
+    def detect_scroll(self, mouse_pos):
         if self.is_dragged(mouse_pos):
             self.barisDragged = True
             self.offset_y = self.bar_pos_y - mouse_pos[1]
 
-    def scrolling(self,mouse_pos):
+    def scrolling(self, mouse_pos):
+        # ensure scroll bar stays inside
         self.bar_pos_y = mouse_pos[1] + self.offset_y
-        if(self.bar_pos_y <= 50):
+        if (self.bar_pos_y <= 50):
             self.bar_pos_y = 50
             return
-        if(self.bar_pos_y >= 525):
+        if (self.bar_pos_y >= 525):
             self.bar_pos_y = 525
             return
-        #testing
+        # testing
         # Update the position of the test rectangle based on the scroll bar position
-        global Recty
-        Recty = 50 + (self.bar_pos_y - 50) * (1000 - window_height) / (600 - 50 - self.bar_height)
+        global timetable_y_pos
+        timetable_y_pos = 50 - (self.bar_pos_y - 50) * (1000 - window_height) / (600 - 50 - self.bar_height)
 
-    def stop_scrolling(self,mouse_pos):
+    def stop_scrolling(self, mouse_pos):
         self.barisDragged = False
 
-rightScrollBar = scrollBar(975,50,25,600)
+
+rightScrollBar = scrollBar(975, 50, 25, 600)
 scrollBars = [rightScrollBar]
 
 # Create a font object
 font = pygame.font.Font(None, 24)
 datefont = pygame.font.Font(None, 30)
 
-#dateTime
+
+# dateTime
 def draw_monthYear():
     # Get the current date
     now = datetime.datetime.now()
@@ -153,6 +168,7 @@ def draw_monthYear():
     # Blit the text surface onto the screen
     screen.blit(text_surface, (0, 20))  # Adjust the position as needed
 
+
 def get_monday_date():
     # Get today's date
     today = datetime.datetime.now()
@@ -161,6 +177,7 @@ def get_monday_date():
     # Subtract the difference to get the date of Monday of the current week
     monday_date = today - timedelta(days=days_to_monday)
     return monday_date
+
 
 def draw_dayDate(x, y):
     # Get the date of Monday of the current week
@@ -182,6 +199,7 @@ def draw_dayDate(x, y):
             text_surface = datefont.render(day_DateString, True, (255, 0, 0))  # Change color to red
         screen.blit(text_surface, (x + (120 * i), y))
 
+
 # UserGUIClasses
 
 class TextBox(object):
@@ -189,8 +207,7 @@ class TextBox(object):
     status = False
     Colours = [pygame.Color('lightskyblue3'), pygame.Color('grey15')]
 
-
-    def __init__(self, height, width, x, y, header, DefText, TextMode = 0,textMax = 30):
+    def __init__(self, height, width, x, y, header, DefText, TextMode=0, textMax=30):
         self.height = height * font_size
         self.width = width * font_size
         self.x = x
@@ -202,7 +219,7 @@ class TextBox(object):
         self.DefText = DefText
         self.TextMode = TextMode
 
-    def checkStatus(self,MousePos):
+    def checkStatus(self, MousePos):
         # Check Collision
         if self.box_rect.collidepoint(MousePos):
             self.status = True
@@ -227,19 +244,19 @@ class TextBox(object):
     def Draw(self):
         # Drawing Box
         pygame.draw.rect(screen, 'white', self.box_rect)
-        pygame.draw.rect(screen, self.Colours[0 if self.status else 1], self.box_rect,2)
+        pygame.draw.rect(screen, self.Colours[0 if self.status else 1], self.box_rect, 2)
 
         # Drawing Header
         header_surface = test_font.render(self.header, True, 'black')
-        screen.blit(header_surface, (self.box_rect.x, self.box_rect.y - 0.8*font_size))
+        screen.blit(header_surface, (self.box_rect.x, self.box_rect.y - 0.8 * font_size))
 
         # Drawing Default Text
-        #DefText_surface = test_font.render(self.BoxText, True, 'black')
-        #screen.blit(DefText_surface, ((self.box_rect.x + 5, self.box_rect.y + 5)))
+        # DefText_surface = test_font.render(self.BoxText, True, 'black')
+        # screen.blit(DefText_surface, ((self.box_rect.x + 5, self.box_rect.y + 5)))
 
         # Drawing Text
-        #text_surface = test_font.render(self.text, True, 'black')
-        #screen.blit(text_surface, (self.box_rect.x + 5, self.box_rect.y + 5))
+        # text_surface = test_font.render(self.text, True, 'black')
+        # screen.blit(text_surface, (self.box_rect.x + 5, self.box_rect.y + 5))
 
         # Merged Commented Code
 
@@ -250,17 +267,19 @@ class TextBox(object):
             text_surface = test_font.render(self.text, True, 'black')
         screen.blit(text_surface, (self.box_rect.x + 5, self.box_rect.y + 5))
 
+
 class DropBox(TextBox):
     ObjectType = 1
     Cycle = 0
     ScrollSen = 2
-    def __init__(self, height, width, x, y, header,DefText,Content,MaxCycle):
-        super().__init__(height, width, x, y, header,DefText)
-        self.DDBox_Rect = pygame.Rect(self.x,self.y-self.height, self.width,self.height*3)
+
+    def __init__(self, height, width, x, y, header, DefText, Content, MaxCycle):
+        super().__init__(height, width, x, y, header, DefText)
+        self.DDBox_Rect = pygame.Rect(self.x, self.y - self.height, self.width, self.height * 3)
         self.Content = Content
         self.MaxCycle = MaxCycle
 
-    def checkStatus(self,MousePos):
+    def checkStatus(self, MousePos):
         # Check Collision
         if self.box_rect.collidepoint(MousePos):
             if self.status:
@@ -278,19 +297,18 @@ class DropBox(TextBox):
                 if i == 1:
                     pygame.draw.rect(screen, 'purple', self.box_rect)
                     pygame.draw.rect(screen, self.Colours[0 if self.status else 1], self.box_rect, 2)
-                text_surface = test_font.render(f"{self.Content[(floor(self.Cycle/self.ScrollSen)+(i-1))%self.MaxCycle]:02d}", True, 'black')
-                screen.blit(text_surface, (self.DDBox_Rect.x + 5, self.box_rect.y + 5 + (i-1)*self.height))
+                text_surface = test_font.render(
+                    f"{self.Content[(floor(self.Cycle / self.ScrollSen) + (i - 1)) % self.MaxCycle]:02d}", True,
+                    'black')
+                screen.blit(text_surface, (self.DDBox_Rect.x + 5, self.box_rect.y + 5 + (i - 1) * self.height))
 
-            #Update the TextBox
-            self.text = f"{self.Content[floor(self.Cycle/self.ScrollSen)]:02d}"
+            # Update the TextBox
+            self.text = f"{self.Content[floor(self.Cycle / self.ScrollSen)]:02d}"
 
-        elif self.status and not self.MaxCycle: # ONLY FOR DD MM YYYY
+        elif self.status and not self.MaxCycle:  # ONLY FOR DD MM YYYY
             small_font = pygame.font.Font(None, 16)
             text_surface = small_font.render('Enter Month and Year first!', True, 'red')
-            screen.blit(text_surface, (self.DDBox_Rect.x + 5, self.box_rect.y + self.height+5))
-
-
-
+            screen.blit(text_surface, (self.DDBox_Rect.x + 5, self.box_rect.y + self.height + 5))
 
     def CheckDayMon(self):
         if self.header == 'Date' or self.header == 'Month':
@@ -299,20 +317,21 @@ class DropBox(TextBox):
 
         return 0
 
+
 class TickBox(object):
     ObjectType = 2
     status = False
     Tick_Status = False
 
-    Colours = ['white','red']
+    Colours = ['white', 'red']
 
-    def __init__(self,x,y,header):
+    def __init__(self, x, y, header):
         self.x = x
         self.y = y
         self.header = header
-        self.box_rect = pygame.Rect(self.x,self.y,30,30)
+        self.box_rect = pygame.Rect(self.x, self.y, 30, 30)
 
-    def checkStatus(self,MousePos):
+    def checkStatus(self, MousePos):
         # Check Collision
         if self.box_rect.collidepoint(MousePos):
             self.status = True
@@ -332,11 +351,12 @@ class TickBox(object):
         header_surface = test_font.render(self.header, True, 'black')
         screen.blit(header_surface, (self.x + 35, self.y))
 
+
 class UserInputGUI(object):
     # User GUI Window
     # GUI Size
-    BG_Width = 0.8*window_width
-    BG_Height = 0.8*window_height
+    BG_Width = 0.8 * window_width
+    BG_Height = 0.8 * window_height
 
     # (0,0) Position on Background is ( (window_width-BG_Width)/2 , window_height-BG_Height)/2 )
     BG_x = (window_width - BG_Width) / 2
@@ -351,30 +371,27 @@ class UserInputGUI(object):
     FixDict = {}
     DymDict = {}
 
-    DD_Mins = [00,15,30,45]
+    DD_Mins = [00, 15, 30, 45]
     DD_Hours = [x for x in range(24)]
     DD_Year = [x + 2020 for x in range(50)]
     DD_Month = [x + 1 for x in range(12)]
     DD_Days = [x + 1 for x in range(31)]
-    DD_MthDay = [31,28,31,30,31,30,31,31,30,31,30,31]
+    DD_MthDay = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
     """ Start of Merging"""
-    Mode = 0 # 0 for Fixed 1 for Dynamic
+    Mode = 0  # 0 for Fixed 1 for Dynamic
 
-    DefParaStr = ['Event','Location','Description']
-    DefParaDB = ['Priority',['Day','Month','Year']]
+    DefParaStr = ['Event', 'Location', 'Description']
+    DefParaDB = ['Priority', ['Day', 'Month', 'Year']]
     DefParaTB = ['Dynamic Event']
 
-    FixParaStr = ['Period','Cycle']
-    FixParaDB = [['StartHr','StartMin'],['EndHr','EndMin']]
+    FixParaStr = ['Period', 'Cycle']
+    FixParaDB = [['StartHr', 'StartMin'], ['EndHr', 'EndMin']]
     FixParaTB = ['Recurrent']
 
-    DymParaDB = [['DurHr','DurMin']]
-
-
+    DymParaDB = [['DurHr', 'DurMin']]
 
     """ End of Merging"""
-
 
     def __init__(self):
         """ Start of Merging"""
@@ -396,59 +413,67 @@ class UserInputGUI(object):
         self.DefDict[self.DefParaTB[0]] = TickBox(self.BG_x + 6 * font_size, self.BG_y + font_size, self.DefParaTB[0])
 
         # Event Name
-        self.DefDict[self.DefParaStr[0]] = TextBox(1, 20, self.BG_x + font_size, self.BG_y + 4 * font_size, self.DefParaStr[0],
-                                              'Enter the Event')
+        self.DefDict[self.DefParaStr[0]] = TextBox(1, 20, self.BG_x + font_size, self.BG_y + 4 * font_size,
+                                                   self.DefParaStr[0],
+                                                   'Enter the Event')
 
         # Event Location
-        self.DefDict[self.DefParaStr[1]] = TextBox(1, 20, self.BG_x + font_size, self.BG_y + 6 * font_size, self.DefParaStr[1],
-                                                'Enter the Location')
+        self.DefDict[self.DefParaStr[1]] = TextBox(1, 20, self.BG_x + font_size, self.BG_y + 6 * font_size,
+                                                   self.DefParaStr[1],
+                                                   'Enter the Location')
 
         # Event Description
-        self.DefDict[self.DefParaStr[2]] = TextBox(3, 20, self.BG_x + font_size, self.BG_y + 8 * font_size, self.DefParaStr[2],
-                                                'Enter the Description',textMax=30)
+        self.DefDict[self.DefParaStr[2]] = TextBox(3, 20, self.BG_x + font_size, self.BG_y + 8 * font_size,
+                                                   self.DefParaStr[2],
+                                                   'Enter the Description', textMax=30)
 
         # Priority Dropbox
-        self.DefDict[self.DefParaDB[0]] = DropBox(1, 2, self.BG_x + 22 * font_size, self.BG_y + 4 * font_size, self.DefParaDB[0],
-                                               '0', [0,1,2,3], 4)
+        self.DefDict[self.DefParaDB[0]] = DropBox(1, 2, self.BG_x + 22 * font_size, self.BG_y + 4 * font_size,
+                                                  self.DefParaDB[0],
+                                                  '0', [0, 1, 2, 3], 4)
         # Date
         self.DefDict[self.DefParaDB[1][0]] = DropBox(1, 2, self.BG_x + 4.5 * font_size, self.BG_y + 12 * font_size,
                                                      self.DefParaDB[1][0],
-                                                  'DD', self.DD_Days, 0)
+                                                     'DD', self.DD_Days, 0)
         self.DefDict[self.DefParaDB[1][1]] = DropBox(1, 2, self.BG_x + 7 * font_size, self.BG_y + 12 * font_size,
                                                      self.DefParaDB[1][1],
-                                                  'MM', self.DD_Month, 12)
+                                                     'MM', self.DD_Month, 12)
         self.DefDict[self.DefParaDB[1][2]] = DropBox(1, 2, self.BG_x + 9.5 * font_size, self.BG_y + 12 * font_size,
                                                      self.DefParaDB[1][2],
-                                                  'YYYY', self.DD_Year, 50)
-
-
+                                                     'YYYY', self.DD_Year, 50)
 
         # Fixed Boxes
         # Recurrent Start
-        self.RecurDict[self.FixParaStr[0]] = TextBox(1, 2, self.BG_x + 29 * font_size, self.BG_y + 6 * font_size, self.FixParaStr[0],
-                                                '00',1,2)
-        self.RecurDict[self.FixParaStr[1]] = TextBox(1, 2, self.BG_x + 26 * font_size, self.BG_y + 6 * font_size, self.FixParaStr[1],
-                                                '00',1,2)
+        self.RecurDict[self.FixParaStr[0]] = TextBox(1, 2, self.BG_x + 29 * font_size, self.BG_y + 6 * font_size,
+                                                     self.FixParaStr[0],
+                                                     '00', 1, 2)
+        self.RecurDict[self.FixParaStr[1]] = TextBox(1, 2, self.BG_x + 26 * font_size, self.BG_y + 6 * font_size,
+                                                     self.FixParaStr[1],
+                                                     '00', 1, 2)
         self.FixDict[self.FixParaTB[0]] = TickBox(self.BG_x + 14 * font_size, self.BG_y + font_size, self.FixParaTB[0])
         # Recurrent End
 
         # Time
         # Start Time
-        self.FixDict[self.FixParaDB[0][0]] = DropBox(1, 2, self.BG_x + 4.5 * font_size, self.BG_y + 16 * font_size, 'Hour',
-                                                  'Hrs', self.DD_Hours, 24)
+        self.FixDict[self.FixParaDB[0][0]] = DropBox(1, 2, self.BG_x + 4.5 * font_size, self.BG_y + 16 * font_size,
+                                                     'Hour',
+                                                     'Hrs', self.DD_Hours, 24)
         self.FixDict[self.FixParaDB[0][1]] = DropBox(1, 2, self.BG_x + 7 * font_size, self.BG_y + 16 * font_size, 'Min',
-                                                  'Mins', self.DD_Mins, 4)
+                                                     'Mins', self.DD_Mins, 4)
         # End Time
-        self.FixDict[self.FixParaDB[1][0]] = DropBox(1, 2, self.BG_x + 15 * font_size, self.BG_y + 16 * font_size, 'Hour',
-                                                  'Hrs', self.DD_Hours, 24)
-        self.FixDict[self.FixParaDB[1][1]] = DropBox(1, 2, self.BG_x + 17.5 * font_size, self.BG_y + 16 * font_size, 'Min',
-                                                  'Mins', self.DD_Mins, 4)
+        self.FixDict[self.FixParaDB[1][0]] = DropBox(1, 2, self.BG_x + 15 * font_size, self.BG_y + 16 * font_size,
+                                                     'Hour',
+                                                     'Hrs', self.DD_Hours, 24)
+        self.FixDict[self.FixParaDB[1][1]] = DropBox(1, 2, self.BG_x + 17.5 * font_size, self.BG_y + 16 * font_size,
+                                                     'Min',
+                                                     'Mins', self.DD_Mins, 4)
 
         # Dynamic Boxes
-        self.DymDict[self.DymParaDB[0][0]] = DropBox(1, 2, self.BG_x + 4.5 * font_size, self.BG_y + 16 * font_size, 'Hour',
-                                                  'Hrs', self.DD_Hours, 24)
+        self.DymDict[self.DymParaDB[0][0]] = DropBox(1, 2, self.BG_x + 4.5 * font_size, self.BG_y + 16 * font_size,
+                                                     'Hour',
+                                                     'Hrs', self.DD_Hours, 24)
         self.DymDict[self.DymParaDB[0][1]] = DropBox(1, 2, self.BG_x + 7 * font_size, self.BG_y + 16 * font_size, 'Min',
-                                                  'Mins', self.DD_Mins, 4)
+                                                     'Mins', self.DD_Mins, 4)
 
         """ End of Merging"""
 
@@ -462,20 +487,21 @@ class UserInputGUI(object):
         pygame.draw.rect(screen, 'red', self.Exit_Rect)
         Exit_font = pygame.font.Font(None, self.Exit_Rect.width)
         Exit_surface = Exit_font.render('x', True, 'white')
-        screen.blit(Exit_surface, (self.Exit_Rect.x + 0.25*font_size, self.Exit_Rect.y))
+        screen.blit(Exit_surface, (self.Exit_Rect.x + 0.25 * font_size, self.Exit_Rect.y))
 
         # Save Button
         pygame.draw.rect(screen, 'red', self.Save_Rect)
         Save_Surface = test_font.render('Save', True, 'white')
-        screen.blit(Save_Surface, (self.Save_Rect.x,self.Save_Rect.y))
+        screen.blit(Save_Surface, (self.Save_Rect.x, self.Save_Rect.y))
 
         # Priority Text
-        Priority = ['Low','Medium','High','Urgent']
+        Priority = ['Low', 'Medium', 'High', 'Urgent']
         Priority_Class = self.DefDict['Priority']
 
         for i in range(4):
             Priority_Surface = Small_font.render(f'{i} - {Priority[i]}', True, 'White')
-            screen.blit(Priority_Surface, (Priority_Class.x + 3 * font_size, Priority_Class.y - font_size + i*0.5*font_size))
+            screen.blit(Priority_Surface,
+                        (Priority_Class.x + 3 * font_size, Priority_Class.y - font_size + i * 0.5 * font_size))
 
         # Date Text
         Date_Class = self.DefDict['Day']
@@ -529,7 +555,6 @@ class UserInputGUI(object):
                     else:
                         item.Draw()
 
-
             for item in self.FixDict.values():
                 if item.ObjectType == 1:
                     item.DrawDDBox()
@@ -562,37 +587,37 @@ class UserInputGUI(object):
     def EditText(self, Mode, Char):
         for item in self.DefDict.values():
             if item.status and item.ObjectType == 0:
-                item.updateText(Mode,Char)
+                item.updateText(Mode, Char)
 
         TempDict = self.DymDict if self.Mode else self.FixDict
         for item in TempDict.values():
             if item.status and item.ObjectType == 0:
-                item.updateText(Mode,Char)
+                item.updateText(Mode, Char)
         if not self.Mode and self.FixDict['Recurrent'].Tick_Status:
             for item in self.RecurDict.values():
                 if item.status and item.ObjectType == 0:
-                    item.updateText(Mode,Char)
+                    item.updateText(Mode, Char)
 
     def ScrollDD(self, UpDown, MousePos):
         for item in self.DefDict.values():
-            self.ScrollFunc(item,UpDown)
+            self.ScrollFunc(item, UpDown)
 
         TempDict = self.DymDict if self.Mode else self.FixDict
         for item in TempDict.values():
-            self.ScrollFunc(item,UpDown)
+            self.ScrollFunc(item, UpDown)
         if not self.Mode and self.FixDict['Recurrent'].Tick_Status:
             for item in self.RecurDict.values():
-                self.ScrollFunc(item,UpDown)
+                self.ScrollFunc(item, UpDown)
 
         self.UpdateDay()
 
-    def ScrollFunc(self,item,UpDown):
+    def ScrollFunc(self, item, UpDown):
         if item.status and item.ObjectType == 1:
             if item.CheckDayMon():
                 return
             if UpDown == 4:  # Scroll Up
                 item.Cycle -= 1
-            else:               # Scroll Down
+            else:  # Scroll Down
                 item.Cycle += 1
             if item.Cycle == item.ScrollSen * item.MaxCycle:  # Cycle from last to first
                 item.Cycle = 0
@@ -607,7 +632,7 @@ class UserInputGUI(object):
             return
         if Year.status or Month.status:
             if Year.text != '' and Month.text != '':
-                if(int(Year.text)-2024)/4 == 0:
+                if (int(Year.text) - 2024) / 4 == 0:
                     Leap = 1
                 else:
                     Leap = 0
@@ -645,7 +670,6 @@ class UserInputGUI(object):
             if item.ObjectType != 2 and item.text == '':
                 return 1
 
-
         if not self.Mode and self.FixDict['Recurrent'].Tick_Status:
             for item in self.RecurDict.values():
                 if item.ObjectType != 2 and item.text == '':
@@ -660,10 +684,11 @@ class UserInputGUI(object):
         EventLoc = self.DefDict['Location'].text
         EventDes = self.DefDict['Description'].text
         _Priority = Priority(int(self.DefDict['Priority'].text))
-        Date = datetime.date(int(self.DefDict['Year'].text),int(self.DefDict['Month'].text),int(self.DefDict['Day'].text))
+        Date = datetime.date(int(self.DefDict['Year'].text), int(self.DefDict['Month'].text),
+                             int(self.DefDict['Day'].text))
 
-        if self.Mode: ##self.mode = 1 means dynamic event
-            EventDur = datetime.time(int(self.DymDict['DurHr'].text),int(self.DymDict['DurMin'].text))
+        if self.Mode:  ##self.mode = 1 means dynamic event
+            EventDur = datetime.time(int(self.DymDict['DurHr'].text), int(self.DymDict['DurMin'].text))
 
             Event = DynamicEvent(name=EventName,
                                  duration=EventDur,
@@ -679,9 +704,8 @@ class UserInputGUI(object):
             else:
                 Period = 0
                 Cycle = 0
-            StartTime = datetime.time(int(self.FixDict['StartHr'].text),int(self.FixDict['StartMin'].text))
+            StartTime = datetime.time(int(self.FixDict['StartHr'].text), int(self.FixDict['StartMin'].text))
             EndTime = datetime.time(int(self.FixDict['EndHr'].text), int(self.FixDict['EndMin'].text))
-
 
             Event = FixedEvent(name=EventName,
                                start_time=StartTime,
@@ -704,34 +728,34 @@ class UserInputGUI(object):
 
 
 # Initialize Timetable
-TTableObject = TTable(100,100)
+TTableObject = TTable(100, 100)
 # Loading Data from storage
 
 
 # Initialize Variables
-sideBar = pygame.Rect(0,0,150,600)
-dayBar = pygame.Rect(150,0,850,50)
+sideBar = pygame.Rect(0, 0, 150, 600)
+dayBar = pygame.Rect(150, 0, 850, 50)
 
 # To add buttons just add here and chagne the array
 # Buttons
 inputButton = SideButton(0, 50, 100, 40, "INPUT")
 sortButton = SideButton(0, 90, 100, 40, "SORT")
-deleteButton = SideButton(0,130,100,40,"DELETE")
-editButton = SideButton(0,170,100,40,"EDIT")
+deleteButton = SideButton(0, 130, 100, 40, "DELETE")
+editButton = SideButton(0, 170, 100, 40, "EDIT")
 
-#upButton = SideButton(0,555,100,20,"UP")
-#downButton = SideButton(0,575,100,20,"DOWN")
+# upButton = SideButton(0,555,100,20,"UP")
+# downButton = SideButton(0,575,100,20,"DOWN")
 
-PlannerButtons = [sortButton, inputButton,deleteButton,editButton]
-
+PlannerButtons = [sortButton, inputButton, deleteButton, editButton]
 
 # Initialise UserInputGUI
 UserGUIObject = UserInputGUI()
 print(UserGUIObject.FixDict)
 
+
 # Input handling
 def handle_input():
-    global running, window_height, window_width, screen,PlannerButtons, UserEventGUI
+    global running, window_height, window_width, screen, PlannerButtons, UserEventGUI
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -739,6 +763,7 @@ def handle_input():
         # Seperated Main input with GUI Input
         if not UserEventGUI:
             if event.type == pygame.MOUSEBUTTONDOWN:
+                global timetable_y_pos
                 if event.button == 1:  # Left mouse button
                     mouse_pos = pygame.mouse.get_pos()
                     for _button in PlannerButtons:
@@ -748,9 +773,32 @@ def handle_input():
                             _button.isClicked = True
                     for _scrollbar in scrollBars:
                         _scrollbar.detect_scroll(mouse_pos)
+                elif event.button == 4:  # Scroll up
+                    # Move the timetable and scroll bar up by a certain amount
+                    if rightScrollBar.bar_pos_y <= 50:
+                        rightScrollBar.bar_pos_y = 50
+                        return
+                    elif rightScrollBar.bar_pos_y >= 525:
+                        rightScrollBar.bar_pos_y = 525
+                        return
+                    if (rightScrollBar.bar_pos_y >= 40 and rightScrollBar.bar_pos_y <= 525):
+                        timetable_y_pos += SCROLL_SPEED
+                        rightScrollBar.bar_pos_y -= SCROLL_SPEED
+                elif event.button == 5:  # Scroll down
+                    if rightScrollBar.bar_pos_y < 50:
+                        rightScrollBar.bar_pos_y = 50
+                        return
+                    elif rightScrollBar.bar_pos_y > 525:
+                        rightScrollBar.bar_pos_y = 525
+                        return
+                    if (rightScrollBar.bar_pos_y >= 40 and rightScrollBar.bar_pos_y <= 525):
+                        # Move the timetable and scroll bar down by a certain amount
+                        timetable_y_pos -= SCROLL_SPEED
+                        rightScrollBar.bar_pos_y += SCROLL_SPEED
+
 
             elif event.type == pygame.MOUSEBUTTONUP:
-                #stop scrolling
+                # stop scrolling
                 mouse_pos = pygame.mouse.get_pos()
                 if event.button == 1:
                     for _scrollbar in scrollBars:
@@ -767,8 +815,7 @@ def handle_input():
                     if _scrollbar.barisDragged:
                         _scrollbar.scrolling(mouse_pos)
 
-
-        if  UserEventGUI:
+        if UserEventGUI:
             UserGUIObject.Update()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
@@ -782,11 +829,11 @@ def handle_input():
                     elif Value == 2:
                         Event = UserGUIObject.CreateEvent()
                         Event.print_event()
-                        UserGUIObject.Clear_Input() # Output 0/1 for Fix/Dym for adding
+                        UserGUIObject.Clear_Input()  # Output 0/1 for Fix/Dym for adding
                         UserEventGUI = False
 
                 if event.button in [4, 5]:
-                    #print(event.button)
+                    # print(event.button)
                     UserGUIObject.ScrollDD(event.button, event.pos)
 
         if event.type == pygame.KEYDOWN:
@@ -797,24 +844,23 @@ def handle_input():
                     UserGUIObject.EditText(1, event.unicode)
 
 
-
 def update():
     global PlannerButtons
 
     pygame.display.update()
     for button in PlannerButtons:
-        if(inputButton.isClicked):
+        if (inputButton.isClicked):
             print("CLICK INPUT")
-            inputButton.isClicked = False;
+            inputButton.isClicked = False
         if (sortButton.isClicked):
             print("CLICK SORT")
-            sortButton.isClicked = False;
+            sortButton.isClicked = False
         if (deleteButton.isClicked):
             print("CLICK DELETE")
-            deleteButton.isClicked = False;
+            deleteButton.isClicked = False
         if (editButton.isClicked):
             print("CLICK EDIT")
-            editButton.isClicked = False;
+            editButton.isClicked = False
 
 
 def draw():
@@ -822,28 +868,31 @@ def draw():
     # Clear the screen
     screen.fill(white_background)
 
-    #testing
-    # Draw the test rectangle at the calculated content position
-    pygame.draw.rect(screen, (255, 0, 0), (400,Recty, 500, 100))
-    #testing
+    # draw events
+    for _event in DymEvents:
+        temp = timetableBox(150, timetable_y_pos, 100, 100, _event, screen)
+        mouse_pos = pygame.mouse.get_pos()
+        temp.isHovered = temp.is_hovered_over(mouse_pos)
+        temp.draw(mouse_pos)
 
-    #draw Bars
-    pygame.draw.rect(screen,(112,128,144),sideBar)
-    pygame.draw.rect(screen,Slate_Gray,dayBar)
+    # draw Bars
+    pygame.draw.rect(screen, (112, 128, 144), sideBar)
+    pygame.draw.rect(screen, Slate_Gray, dayBar)
 
     draw_monthYear()
-    draw_dayDate(150,30)
+    draw_dayDate(150, 30)
 
-    #draw buttons
+    # draw buttons
     for _button in PlannerButtons:
         _button.draw(screen)
 
-    #draw scroll bar
+    # draw scroll bar
     for _scrollbar in scrollBars:
         _scrollbar.draw(screen)
 
     if UserEventGUI:
         UserGUIObject.Draw()
+
 
 # Program Loop
 running = True
