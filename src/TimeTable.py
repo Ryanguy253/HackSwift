@@ -36,10 +36,32 @@ class TimeTable:
         self.fixed_events: List[FixedEvent] = []    # Contains FixedEvent objects which are not completed yet, and are recurring
         self.dynamic_events: List[DynamicEvent] = []  # Contains DynamicEvent objects which are not completed yet
         self.completed_events = []# Contains FixedEvent and DynamicEvent objects which are completed, 
-                                  # ~ FixedEvent objects which are not recurring should not be here
 
-    def sort_events(self):
-        pass
+    def sort_fixed_events(self):
+        TNow = datetime.datetime.now()
+        TempList = []
+        OutputList = []
+        for item in self.fixed_events:
+            TDiff = datetime.datetime.combine(item.get_date(),item.get_start_time())-TNow
+            TimeTillEvent = TDiff.days * (24*60*60) + TDiff.seconds
+            TempList.append((TimeTillEvent,item))
+        TempList.sort()
+        for item in TempList:
+            OutputList.append(item[1])
+        self.fixed_events = OutputList
+
+    def sort_dynamic_events(self):
+        TNow = datetime.datetime.now()
+        TempList = []
+        OutputList = []
+        for item in self.dynamic_events:
+            TDiff = datetime.datetime.combine(item.get_date(),item.get_start_time())-TNow
+            TimeTillEvent = TDiff.days * (24*60*60) + TDiff.seconds
+            TempList.append((TimeTillEvent,item))
+        TempList.sort()
+        for item in TempList:
+            OutputList.append(item[1])
+        self.dynamic_events = OutputList
 
     def add_fixed_event(self, event: FixedEvent):
         event._unique_id = self.id_counter
@@ -58,21 +80,50 @@ class TimeTable:
             return 0
         for event in self.fixed_events:
             if event._unique_id == id:
-                pass
-        # ...
-        self.schedule_dynamic_events()
-        pass  # Check equality id
+                self.fixed_events.remove(event)
+                self.schedule_dynamic_events()
+                return 1
+        # Check equality id
 
     def remove_dynamic_event(self, id: int):
-        # ...
-        self.schedule_dynamic_events()
+        if len(self.dynamic_events) == 0:
+            return 0
+        for event in self.dynamic_events:
+            if event._unique_id == id:
+                self.dynamic_events.remove(event)
+                self.schedule_dynamic_events()
+                return 1
         pass  # Check equality id
 
     def get_fixed_events_by_week(self, week: datetime.date):
-        pass
+        output = []
+        today = datetime.datetime.now()
+        days_to_monday = today.weekday()
+        monday_date = today - datetime.timedelta(days=days_to_monday)
+        self.sort_fixed_events()
+
+        end_date = monday_date + datetime.timedelta(days=7)
+        for item in self.fixed_events:
+            if item.get_date() < end_date:
+                output.append(item)
+            else:
+                break
+        return output
 
     def get_dynamic_events_by_week(self, week: datetime.date):
-        pass
+        output = []
+        today = datetime.datetime.now()
+        days_to_monday = today.weekday()
+        monday_date = today - datetime.timedelta(days=days_to_monday)
+        self.sort_dynamic_events()
+
+        end_date = monday_date + datetime.timedelta(days=7)
+        for item in self.fixed_events:
+            if item.get_date() < end_date:
+                output.append(item)
+            else:
+                break
+        return output
     
     def get_occupied_time_ranges(self):
         pass
@@ -230,22 +281,25 @@ def testEvent(FixArray, DymArray):
                            priority_tag=Priority(i % 4))
         FixArray.append(Event)
 
-        Event = DynamicEvent(name='Dym' + str(a),
+        Event1 = DynamicEvent(name='Dym' + str(a),
                              duration=datetime.time(0, 30, 0),
                              expiry_date=datetime.datetime.now(),
-                             location='Fix' + str(i),
+                             location='Dym' + str(i),
                              description='Dym' + str(a),
                              priority_tag=Priority(a % 4))
-        Event._start_time = datetime.time(a, 0, 0)
-        Event._date = datetime.datetime.now()
-        DymArray.append(Event)
+        Event1._start_time = datetime.time(a, 0, 0)
+        Event1._date = datetime.datetime.now()
+        DymArray.append(Event1)
 
     for item in FixArray:
         item.print_event()
+
     for item in DymArray:
         item.print_event()
-
+        print(type(item))
+    print(type(DymArray[0]))
 class timetableBox():
+
     def __init__(self, x, y, height, width, Event,screen):
         box_image = pygame.Surface((height, width))
         self.x = x

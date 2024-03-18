@@ -131,6 +131,7 @@ class FixedEvent(Event):
         self._end_time = end_time
         self._recur_period = recur_period
         self._recur_cycle = recur_cycle
+        self.priority_tag = priority_tag
 
     def is_recurring(self):
         return self._recur_period > 0
@@ -171,6 +172,7 @@ class DynamicEvent(Event):
         Event.__init__(self, name, start_time=None, end_time=None, date=None, location=location, description=description, priority_tag=priority_tag)
         self._duration = duration
         self._expiry_date = expiry_date
+        self.priority_tag = priority_tag
 
     # Getters / Setters
     def get_duration(self) -> int:
