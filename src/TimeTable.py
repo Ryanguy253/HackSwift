@@ -17,7 +17,7 @@ class TimeTable:
     def __init__(self,x_pos,y_pos):
         self.x = x_pos
         self.y = y_pos
-
+        self.id_counter = 0
         self.width=0
         self.height = 0
         self.events = 0
@@ -28,12 +28,23 @@ class TimeTable:
         pass
 
     def add_fixed_event(self, event: FixedEvent):
+        event._unique_id = self.id_counter
+        self.fixed_events.append(event)
+        self.id_counter +=1
         pass
 
     def add_dynamic_event(self, event: DynamicEvent):
+        event._unique_id = self.id_counter
+        self.dynamic_events.append(event)
+        self.id_counter += 1
         pass
 
     def remove_fixed_event(self, id: int):
+        if len(self.fixed_events) == 0:
+            return 0
+        for event in self.fixed_events:
+            if event._unique_id == id:
+                pass
         pass # Check equality id
 
     def remove_dynamic_event(self, id: int):

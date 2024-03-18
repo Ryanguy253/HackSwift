@@ -2,6 +2,7 @@ import pygame
 from datetime import datetime,date,timedelta
 from math import sqrt,floor
 from Events import *
+from TimeTable import TimeTable as TTable
 
 # Initialize pygame
 pygame.init()
@@ -408,7 +409,7 @@ class UserInputGUI(object):
 
         # Priority Dropbox
         self.DefDict[self.DefParaDB[0]] = DropBox(1, 2, self.BG_x + 22 * font_size, self.BG_y + 4 * font_size, self.DefParaDB[0],
-                                               '0', [1,2,3,4], 4)
+                                               '0', [0,1,2,3], 4)
         # Date
         self.DefDict[self.DefParaDB[1][0]] = DropBox(1, 2, self.BG_x + 4.5 * font_size, self.BG_y + 12 * font_size,
                                                      self.DefParaDB[1][0],
@@ -606,12 +607,12 @@ class UserInputGUI(object):
             return
         if Year.status or Month.status:
             if Year.text != '' and Month.text != '':
-                if(int(Year.text)-2024)%4 == 0:
+                if(int(Year.text)-2024)/4 == 0:
                     Leap = 1
                 else:
                     Leap = 0
                 MthDay = int(Month.text) - 1
-                MaxDays = self.DD_MthDay[MthDay] + Leap
+                MaxDays = self.DD_MthDay[MthDay] if MthDay != 2 else self.DD_MthDay[MthDay] + Leap
                 Day.MaxCycle = MaxDays
                 Day.Cycle = 0
                 Day.text = '01'
@@ -664,38 +665,47 @@ class UserInputGUI(object):
         if self.Mode: ##self.mode = 1 means dynamic event
             EventDur = datetime.time(int(self.DymDict['DurHr'].text),int(self.DymDict['DurMin'].text))
 
-            Event = DynamicEvent(EventName,EventDur,Date,EventLoc,EventDes,Priority)
-
-            #Event = DynamicEvent(name=EventName,
-            #                     location=EventLoc,
-            #                     description=EventDes,
-            #                     expiry_date=Date,
-            #                     duration=EventDur,
-            #                     priority_tag=Priority)
+            Event = DynamicEvent(name=EventName,
+                                 duration=EventDur,
+                                 expiry_date=Date,
+                                 location=EventLoc,
+                                 description=EventDes,
+                                 priority_tag=_Priority)
 
         else:
-            Period = int(self.RecurDict['Period'].text)
-            Cycle = int(self.RecurDict['Cycle'].text)
+            if self.FixDict['Recurrent'].Tick_Status:
+                Period = int(self.RecurDict['Period'].text)
+                Cycle = int(self.RecurDict['Cycle'].text)
+            else:
+                Period = 0
+                Cycle = 0
             StartTime = datetime.time(int(self.FixDict['StartHr'].text),int(self.FixDict['StartMin'].text))
             EndTime = datetime.time(int(self.FixDict['EndHr'].text), int(self.FixDict['EndMin'].text))
 
 
-            Event = FixedEvent(EventName,StartTime,EndTime,Date,Period,Cycle,EventLoc,EventDes,Priority)
-
-            #Event = FixedEvent(name=EventName,
-            #                   location=EventLoc,
-            #                   description=EventDes,
-            #                   date=Date,
-            #                   start_time=StartTime,
-            #                   end_time=EndTime,
-            #                   recur_period=Period,
-            #                   recur_cycle=Cycle,
-            #                   priority_tag=Priority)
-
+            Event = FixedEvent(name=EventName,
+                               start_time=StartTime,
+                               end_time=EndTime,
+                               date=Date,
+                               recur_period=Period,
+                               recur_cycle=Cycle,
+                               location=EventLoc,
+                               description=EventDes,
+                               priority_tag=_Priority)
         return Event
 
+    def Clear_Input(self):
+        output = self.Mode
+        self.FixDict.clear()
+        self.DefDict.clear()
+        self.DymDict.clear()
+        self.__init__()
+        return output
 
 
+# Initialize Timetable
+TTableObject = TTable(100,100)
+# Loading Data from storage
 
 
 # Initialize Variables
@@ -759,6 +769,7 @@ def handle_input():
 
 
         if  UserEventGUI:
+            UserGUIObject.Update()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
                     UserGUIObject.DeactiveAll()
@@ -770,12 +781,12 @@ def handle_input():
                         UserEventGUI = False
                     elif Value == 2:
                         Event = UserGUIObject.CreateEvent()
-                        #print(Event.get_name())
-                        #print(Event.get_description())
+                        Event.print_event()
+                        UserGUIObject.Clear_Input() # Output 0/1 for Fix/Dym for adding
                         UserEventGUI = False
 
                 if event.button in [4, 5]:
-                    print(event.button)
+                    #print(event.button)
                     UserGUIObject.ScrollDD(event.button, event.pos)
 
         if event.type == pygame.KEYDOWN:
@@ -804,9 +815,6 @@ def update():
         if (editButton.isClicked):
             print("CLICK EDIT")
             editButton.isClicked = False;
-
-    if UserEventGUI:
-        UserGUIObject.Update()
 
 
 def draw():
