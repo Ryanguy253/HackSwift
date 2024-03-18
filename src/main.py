@@ -465,20 +465,21 @@ class UserInputGUI(object):
         pygame.draw.rect(screen, 'red', self.Exit_Rect)
         Exit_font = pygame.font.Font(None, self.Exit_Rect.width)
         Exit_surface = Exit_font.render('x', True, 'white')
-        screen.blit(Exit_surface, (self.Exit_Rect.x + 0.25*font_size, self.Exit_Rect.y))
+        screen.blit(Exit_surface, (self.Exit_Rect.x + 0.25 * font_size, self.Exit_Rect.y))
 
         # Save Button
         pygame.draw.rect(screen, 'red', self.Save_Rect)
         Save_Surface = test_font.render('Save', True, 'white')
-        screen.blit(Save_Surface, (self.Save_Rect.x,self.Save_Rect.y))
+        screen.blit(Save_Surface, (self.Save_Rect.x, self.Save_Rect.y))
 
         # Priority Text
-        Priority = ['Low','Medium','High','Urgent']
+        Priority = ['Low', 'Medium', 'High', 'Urgent']
         Priority_Class = self.DefDict['Priority']
 
         for i in range(4):
             Priority_Surface = Small_font.render(f'{i} - {Priority[i]}', True, 'White')
-            screen.blit(Priority_Surface, (Priority_Class.x + 3 * font_size, Priority_Class.y - font_size + i*0.5*font_size))
+            screen.blit(Priority_Surface,
+                        (Priority_Class.x + 3 * font_size, Priority_Class.y - font_size + i * 0.5 * font_size))
 
         # Date Text
         Date_Class = self.DefDict['Day']
@@ -532,7 +533,6 @@ class UserInputGUI(object):
                     else:
                         item.Draw()
 
-
             for item in self.FixDict.values():
                 if item.ObjectType == 1:
                     item.DrawDDBox()
@@ -565,37 +565,37 @@ class UserInputGUI(object):
     def EditText(self, Mode, Char):
         for item in self.DefDict.values():
             if item.status and item.ObjectType == 0:
-                item.updateText(Mode,Char)
+                item.updateText(Mode, Char)
 
         TempDict = self.DymDict if self.Mode else self.FixDict
         for item in TempDict.values():
             if item.status and item.ObjectType == 0:
-                item.updateText(Mode,Char)
+                item.updateText(Mode, Char)
         if not self.Mode and self.FixDict['Recurrent'].Tick_Status:
             for item in self.RecurDict.values():
                 if item.status and item.ObjectType == 0:
-                    item.updateText(Mode,Char)
+                    item.updateText(Mode, Char)
 
     def ScrollDD(self, UpDown, MousePos):
         for item in self.DefDict.values():
-            self.ScrollFunc(item,UpDown)
+            self.ScrollFunc(item, UpDown)
 
         TempDict = self.DymDict if self.Mode else self.FixDict
         for item in TempDict.values():
-            self.ScrollFunc(item,UpDown)
+            self.ScrollFunc(item, UpDown)
         if not self.Mode and self.FixDict['Recurrent'].Tick_Status:
             for item in self.RecurDict.values():
-                self.ScrollFunc(item,UpDown)
+                self.ScrollFunc(item, UpDown)
 
         self.UpdateDay()
 
-    def ScrollFunc(self,item,UpDown):
+    def ScrollFunc(self, item, UpDown):
         if item.status and item.ObjectType == 1:
             if item.CheckDayMon():
                 return
             if UpDown == 4:  # Scroll Up
                 item.Cycle -= 1
-            else:               # Scroll Down
+            else:  # Scroll Down
                 item.Cycle += 1
             if item.Cycle == item.ScrollSen * item.MaxCycle:  # Cycle from last to first
                 item.Cycle = 0
@@ -610,7 +610,7 @@ class UserInputGUI(object):
             return
         if Year.status or Month.status:
             if Year.text != '' and Month.text != '':
-                if(int(Year.text)-2024)/4 == 0:
+                if (int(Year.text) - 2024) / 4 == 0:
                     Leap = 1
                 else:
                     Leap = 0
@@ -708,7 +708,6 @@ class UserInputGUI(object):
 
 # Initialize Timetable
 TTableObject = TTable(150,50)
-TTableObject.load_data_CSV()
 # Loading Data from storage
 
 
@@ -736,7 +735,7 @@ UserGUIObject = UserInputGUI()
 
 
 # Initialise Dummy Events
-
+'''
 for i in range(0,11,2):
     a = i+1
     Event = FixedEvent(name='Fix'+str(i),
@@ -783,7 +782,7 @@ for i in range(0,11,2):
 
 
 #TTableObject.remove_fixed_event(4)
-'''
+
 for item in TTableObject.dynamic_events:
         item.print_event()
         #print(item._unique_id)
@@ -807,7 +806,6 @@ def handle_input():
     global running, window_height, window_width, screen,PlannerButtons, UserEventGUI
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            TTableObject.save_data_CSV()
             running = False
 
         # Seperated Main input with GUI Input
@@ -861,7 +859,6 @@ def handle_input():
                             TTableObject.add_dynamic_event(Event)
                         else:
                             TTableObject.add_fixed_event(Event)
-
                         UserEventGUI = False
 
                 if event.button in [4, 5]:
