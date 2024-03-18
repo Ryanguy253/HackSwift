@@ -728,8 +728,11 @@ class UserInputGUI(object):
 
 
 # Initialize Timetable
-TTableObject = TTable(100, 100)
+
+TTableObject = TTable(150,50)
+
 # Loading Data from storage
+
 
 
 # Initialize Variables
@@ -750,7 +753,74 @@ PlannerButtons = [sortButton, inputButton, deleteButton, editButton]
 
 # Initialise UserInputGUI
 UserGUIObject = UserInputGUI()
-print(UserGUIObject.FixDict)
+
+
+# Initialise Dummy Events
+'''
+for i in range(0,11,2):
+    a = i+1
+    Event = FixedEvent(name='Fix'+str(i),
+                       start_time=datetime.time(i,0,0),
+                       end_time=datetime.time(i,30,0),
+                       date=datetime.datetime.now(),
+                       recur_period=0,
+                       recur_cycle=0,
+                       location='Fix'+str(i),
+                       description='Fix'+str(i),
+                       priority_tag=Priority(i%4))
+    TTableObject.add_fixed_event(Event)
+
+    Event = FixedEvent(name='Fix' + str(i),
+                       start_time=datetime.time(i, 0, 0),
+                       end_time=datetime.time(i, 30, 0),
+                       date=datetime.date(2024,3,20),
+                       recur_period=0,
+                       recur_cycle=0,
+                       location='Fix' + str(i),
+                       description='Fix' + str(i),
+                       priority_tag=Priority(i % 4))
+    TTableObject.add_fixed_event(Event)
+
+    Event = DynamicEvent(name='Dym'+str(a),
+                         duration=datetime.time(0,30,0),
+                         expiry_date=datetime.datetime.now(),
+                         location='Fix'+str(i),
+                         description='Dym'+str(a),
+                         priority_tag=Priority(a%4))
+    Event._start_time = datetime.time(a,0,0)
+    Event._date = datetime.datetime.now()
+    TTableObject.add_dynamic_event(Event)
+
+    Event = DynamicEvent(name='Dym' + str(a),
+                         duration=datetime.time(0, 30, 0),
+                         expiry_date=datetime.date(2024,3,20),
+                         location='Fix' + str(i),
+                         description='Dym' + str(a),
+                         priority_tag=Priority(a % 4))
+    Event._start_time = datetime.time(a, 0, 0)
+    Event._date = datetime.date(2024,3,20)
+    TTableObject.add_dynamic_event(Event)
+
+
+#TTableObject.remove_fixed_event(4)
+
+for item in TTableObject.dynamic_events:
+        item.print_event()
+        #print(item._unique_id)
+for item in TTableObject.fixed_events:
+        item.print_event()
+        #print(item._unique_id)
+TTableObject.sort_fixed_events()
+TTableObject.sort_dynamic_events()
+print('\n')
+for item in TTableObject.dynamic_events:
+        item.print_event()
+        #print(item._unique_id)
+for item in TTableObject.fixed_events:
+        item.print_event()
+        #print(item._unique_id)
+
+'''
 
 
 # Input handling
