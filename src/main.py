@@ -17,22 +17,25 @@ pygame.display.set_caption("Planner")
 
 # Colours
 Dark_Gray = (64, 64, 64)
-Light_Gray=  (192, 192, 192)
-Slate_Gray= (112, 128, 144)
-Charcoal= (54, 69, 79)
-Steel_Blue= (70, 130, 180)
-Navy_Blue= (0, 0, 128)
-Royal_Blue= (65, 105, 225)
-Deep_Green= (0, 100, 0)
-Olive_Green= (128, 128, 0)
-Burgundy= (128, 0, 32)
+Light_Gray = (192, 192, 192)
+Slate_Gray = (112, 128, 144)
+Charcoal = (54, 69, 79)
+Steel_Blue = (70, 130, 180)
+Navy_Blue = (0, 0, 128)
+Royal_Blue = (65, 105, 225)
+Deep_Green = (0, 100, 0)
+Olive_Green = (128, 128, 0)
+Burgundy = (128, 0, 32)
 
-#Testing
-Recty = 100
-Rect = (400,Recty,100,100)
+# Events
+DymEvents = []
+FixEvents = []
 
-#UserGUI Variables
-font_size = int(0.02* sqrt(window_width**2 + window_height**2))
+# timetable boxes
+timetable_y_pos = 50
+
+# UserGUI Variables
+font_size = int(0.02 * sqrt(window_width ** 2 + window_height ** 2))
 Small_font = pygame.font.Font(None, int(0.8 * font_size))
 test_font = pygame.font.Font(None, font_size)
 UserEventGUI = False
@@ -121,8 +124,10 @@ class scrollBar:
             return
         #testing
         # Update the position of the test rectangle based on the scroll bar position
-        global Recty
-        Recty = 50 + (self.bar_pos_y - 50) * (1000 - window_height) / (600 - 50 - self.bar_height)
+
+        global timetable_y_pos
+        factor = 5  # Adjust this factor according to how much you want to increase timetable_y_pos
+        timetable_y_pos = 50 - (self.bar_pos_y - 50) * factor * (1000 - window_height) / (600 - 50 - self.bar_height)
 
     def stop_scrolling(self,mouse_pos):
         self.barisDragged = False
@@ -822,6 +827,29 @@ def handle_input():
                     for _scrollbar in scrollBars:
                         _scrollbar.detect_scroll(mouse_pos)
 
+                elif event.button == 4:  # Scroll up
+                    # Move the timetable and scroll bar up by a certain amount
+                    if rightScrollBar.bar_pos_y <= 50:
+                        rightScrollBar.bar_pos_y = 50
+                        return
+                    elif rightScrollBar.bar_pos_y >= 525:
+                        rightScrollBar.bar_pos_y = 525
+                        return
+                    if (rightScrollBar.bar_pos_y >= 40 and rightScrollBar.bar_pos_y <= 525):
+                        timetable_y_pos += SCROLL_SPEED
+                        rightScrollBar.bar_pos_y -= SCROLL_SPEED / 3
+
+                elif event.button == 5:  # Scroll down
+
+                    if rightScrollBar.bar_pos_y >= 525:
+                        rightScrollBar.bar_pos_y = 523
+                        return
+                    if (rightScrollBar.bar_pos_y >= 50 and rightScrollBar.bar_pos_y <= 525):
+                        # Move the timetable and scroll bar down by a certain amount
+                        timetable_y_pos -= SCROLL_SPEED
+                        rightScrollBar.bar_pos_y += SCROLL_SPEED / 3
+
+
             elif event.type == pygame.MOUSEBUTTONUP:
                 #stop scrolling
                 mouse_pos = pygame.mouse.get_pos()
@@ -894,15 +922,69 @@ def update():
             editButton.isClicked = False;
 
 
+testEvent(FixEvents, DymEvents)
+
+combinedArray = []
+a = 0
+b = 0
+while (a < len(FixEvents) and b < len(DymEvents)):
+    # print("Dym: ")
+    # print(DymEvents[b]._date)
+    # print("Fix: ")
+    # print(FixEvents[a]._date)
+    if (FixEvents[a]._date < DymEvents[b]._date):
+
+        combinedArray.append((FixEvents[a]))
+        a += 1
+
+    elif FixEvents[a]._date > DymEvents[b]._date:
+        combinedArray.append((DymEvents[b]))
+        b += 1
+    else:
+        if FixEvents[a]._start_time < DymEvents[b]._start_time:
+            combinedArray.append(FixEvents[a])
+            a += 1
+        else:
+            combinedArray.append((DymEvents[b]))
+            b += 1
+
+if (a == len(FixEvents)):
+    while (b < len(DymEvents)):
+        combinedArray.append((DymEvents[b]))
+        b += 1
+else:
+    while (a < len(FixEvents)):
+        combinedArray.append((FixEvents[a]))
+        a += 1
+
+print("b4")
+print((combinedArray[1]._date.day) == (combinedArray[0]._date.day))
+# for i in combinedArray:
+#     print(i._date)
+print("after")
+
+
 def draw():
     global PlannerButtons, screen
     # Clear the screen
     screen.fill(white_background)
 
-    #testing
-    # Draw the test rectangle at the calculated content position
-    pygame.draw.rect(screen, (255, 0, 0), (400,Recty, 500, 100))
-    #testing
+    mouse_position = pygame.mouse.get_pos()
+    current_day = combinedArray[0]._date.day
+    k = 0
+    j = 0
+    for i in range(len(combinedArray)):
+        if current_day != combinedArray[i]._date.day:
+            k += 1
+            j = 0
+            current_day = combinedArray[i]._date.day
+        hello = timetableBox((100 * k) + 150, (100 * j) + timetable_y_pos, 100, 100, combinedArray[i], screen)
+        mouse_pos = pygame.mouse.get_pos()
+        hello.isHovered = hello.is_hovered_over(mouse_pos)
+        hello.draw(mouse_position)
+        j += 1
+        # print(j)
+
 
     #draw Bars
     pygame.draw.rect(screen,(112,128,144),sideBar)
@@ -927,6 +1009,7 @@ running = True
 while running:
     handle_input()
     draw()
+
     update()
 
 # Quit
