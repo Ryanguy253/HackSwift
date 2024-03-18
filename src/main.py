@@ -3,6 +3,7 @@ from datetime import datetime,date,timedelta
 from math import sqrt,floor
 from Events import *
 from TimeTable import TimeTable as TTable
+from TimeTable import *
 
 # Initialize pygame
 pygame.init()
@@ -30,9 +31,12 @@ Burgundy = (128, 0, 32)
 # Events
 DymEvents = []
 FixEvents = []
+combinedArray = []
 
 # timetable boxes
 timetable_y_pos = 50
+SCROLL_SPEED =10
+
 
 # UserGUI Variables
 font_size = int(0.02 * sqrt(window_width ** 2 + window_height ** 2))
@@ -809,7 +813,7 @@ for item in TTableObject.fixed_events:
 
 # Input handling
 def handle_input():
-    global running, window_height, window_width, screen,PlannerButtons, UserEventGUI
+    global running, window_height, window_width, screen,PlannerButtons, UserEventGUI,timetable_y_pos
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -924,66 +928,60 @@ def update():
 
 testEvent(FixEvents, DymEvents)
 
-combinedArray = []
-a = 0
-b = 0
-while (a < len(FixEvents) and b < len(DymEvents)):
-    # print("Dym: ")
-    # print(DymEvents[b]._date)
-    # print("Fix: ")
-    # print(FixEvents[a]._date)
-    if (FixEvents[a]._date < DymEvents[b]._date):
+def updateCombinedArray(FixEvents,DymEvents):
+    global combinedArray
+    combinedArray = []
+    a = 0
+    b = 0
+    while (a < len(FixEvents) and b < len(DymEvents)):
+        if (FixEvents[a]._date < DymEvents[b]._date):
 
-        combinedArray.append((FixEvents[a]))
-        a += 1
-
-    elif FixEvents[a]._date > DymEvents[b]._date:
-        combinedArray.append((DymEvents[b]))
-        b += 1
-    else:
-        if FixEvents[a]._start_time < DymEvents[b]._start_time:
-            combinedArray.append(FixEvents[a])
+            combinedArray.append((FixEvents[a]))
             a += 1
-        else:
+
+        elif FixEvents[a]._date > DymEvents[b]._date:
             combinedArray.append((DymEvents[b]))
             b += 1
+        else:
+            if FixEvents[a]._start_time < DymEvents[b]._start_time:
+                combinedArray.append(FixEvents[a])
+                a += 1
+            else:
+                combinedArray.append((DymEvents[b]))
+                b += 1
 
-if (a == len(FixEvents)):
-    while (b < len(DymEvents)):
-        combinedArray.append((DymEvents[b]))
-        b += 1
-else:
-    while (a < len(FixEvents)):
-        combinedArray.append((FixEvents[a]))
-        a += 1
+    if (a == len(FixEvents)):
+        while (b < len(DymEvents)):
+            combinedArray.append((DymEvents[b]))
+            b += 1
+    else:
+        while (a < len(FixEvents)):
+            combinedArray.append((FixEvents[a]))
+            a += 1
 
-print("b4")
-print((combinedArray[1]._date.day) == (combinedArray[0]._date.day))
-# for i in combinedArray:
-#     print(i._date)
-print("after")
 
 
 def draw():
-    global PlannerButtons, screen
+    global PlannerButtons, screen,combinedArray
     # Clear the screen
     screen.fill(white_background)
 
     mouse_position = pygame.mouse.get_pos()
-    current_day = combinedArray[0]._date.day
-    k = 0
-    j = 0
-    for i in range(len(combinedArray)):
-        if current_day != combinedArray[i]._date.day:
-            k += 1
-            j = 0
-            current_day = combinedArray[i]._date.day
-        hello = timetableBox((100 * k) + 150, (100 * j) + timetable_y_pos, 100, 100, combinedArray[i], screen)
-        mouse_pos = pygame.mouse.get_pos()
-        hello.isHovered = hello.is_hovered_over(mouse_pos)
-        hello.draw(mouse_position)
-        j += 1
-        # print(j)
+    if combinedArray:
+        current_day = combinedArray[0]._date.day
+        k = 0
+        j = 0
+        for i in range(len(combinedArray)):
+            if current_day != combinedArray[i]._date.day:
+                k += 1
+                j = 0
+                current_day = combinedArray[i]._date.day
+            hello = timetableBox((100 * k) + 150, (100 * j) + timetable_y_pos, 100, 100, combinedArray[i], screen)
+            mouse_pos = pygame.mouse.get_pos()
+            hello.isHovered = hello.is_hovered_over(mouse_pos)
+            hello.draw(mouse_position)
+            j += 1
+            # print(j)
 
 
     #draw Bars
