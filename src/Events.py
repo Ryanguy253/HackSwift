@@ -55,6 +55,9 @@ class Event:
     def get_priority(self):
         return self._priority_tag
     
+    def get_priority_value(self):
+        return self._priority_tag.value
+
     def get_counter(self):
         return Event.counter
     
@@ -104,7 +107,7 @@ class FixedEvent(Event):
         return self._date + datetime.timedelta(days=self._recur_period)
     
     def get_duration(self) -> int: 
-        return time_del_to_min(self._end_time - self._start_time)
+        return time_to_minutes(self._end_time) - time_to_minutes(self._start_time)
     
     # Getters / Setters
     def get_end_time(self):
