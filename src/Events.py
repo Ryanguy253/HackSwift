@@ -13,12 +13,14 @@ class Event:
     # Assumption that events are only for a single day
     def __init__(self,name: str,
                  start_time: datetime.time,
+                 end_time: datetime.time,
                  date: datetime.date,
                  location: str,
                  description: str,
                  priority_tag: Priority = Priority.LOW):
         self._name = name
         self._start_time = start_time
+        self._end_time = end_time
         self._date = date
         self._location = location
         self._description = description
@@ -44,6 +46,9 @@ class Event:
     def get_priority(self):
         return self._priority_tag
 
+    def get_end_time(self):
+        return self._end_time
+
     def set_name(self, name: str):
         self._name = name
 
@@ -62,13 +67,26 @@ class Event:
     def set_priority(self, priority_tag: Priority):
         self._priority_tag = priority_tag
 
+    def set_end_time(self, end_time):
+        self._end_time = end_time
+
     # For Checking Events
     def print_event(self):
-        print(self.get_name())
-        print(self.get_location())
-        print(self.get_description())
-        print(self.get_priority())
+        print(self.get_name(),self._date,self._start_time,self.get_priority())
 
+    # To be called by Dynamic Events to find End Time
+    def find_end_time(self,duration):
+        hours = duration.hour
+        mins = duration.minute
+        _StartTime = datetime.datetime.combine(self._date, self._start_time)
+        _TimeDelta = datetime.timedelta(hours=hours,minutes=mins)
+        return (_StartTime + _TimeDelta).time()
+
+    # To be called by Fixed Events to find Duration
+    def find_duration(self):
+        _StartTime = datetime.datetime.combine(self._date, self._start_time)
+        _EndTime = datetime.datetime.combine(self._date, self._end_time)
+        return (_EndTime-_StartTime)
 
 # This actually violates Liskov Substitution Principle, but we're not gonna store events anyways, we're storing FixedEvents and DynamicEvents seperately
 # recurring_period is a number of days between each event instance
@@ -85,8 +103,7 @@ class FixedEvent(Event):
                  description: str,
                  priority_tag: Priority = Priority.LOW):
         super().__init__(name=name,start_time=start_time,date=date,location=location,description=description,
-                         priority_tag=priority_tag,)
-        self._end_time = end_time
+                         priority_tag=priority_tag,end_time= end_time)
         self._recur_period = recur_period
         self._recur_cycle = recur_cycle
 
@@ -100,17 +117,11 @@ class FixedEvent(Event):
         return self._end_time - self._start_time
 
     # Getters / Setters
-    def get_end_time(self):
-        return self._end_time
-
     def get_recur_period(self):
         return self._recur_period
 
     def get_recur_cycle(self):
         return self._recur_cycle
-
-    def set_end_time(self, end_time):
-        self._end_time = end_time
 
     def set_recur_period(self, recurring_period):
         self._recur_period = recurring_period
@@ -131,7 +142,7 @@ class DynamicEvent(Event):
                  description: str,
                  priority_tag: Priority = Priority.LOW):
         super().__init__(name=name, start_time=None, date=None, location=location, description=description,
-                         priority_tag=priority_tag)
+                         priority_tag=priority_tag,end_time=None)
         self._duration = duration
         self._expiry_date = expiry_date
 
