@@ -116,14 +116,8 @@ class scrollBar:
     def stop_scrolling(self,mouse_pos):
         self.barisDragged = False
 
-
 rightScrollBar = scrollBar(975,50,25,600)
 scrollBars = [rightScrollBar]
-
-
-
-
-
 
 # Create a font object
 font = pygame.font.Font(None, 24)
