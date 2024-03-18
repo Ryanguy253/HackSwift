@@ -708,6 +708,7 @@ class UserInputGUI(object):
 
 # Initialize Timetable
 TTableObject = TTable(150,50)
+TTableObject.load_data_CSV()
 # Loading Data from storage
 
 
@@ -735,7 +736,7 @@ UserGUIObject = UserInputGUI()
 
 
 # Initialise Dummy Events
-'''
+
 for i in range(0,11,2):
     a = i+1
     Event = FixedEvent(name='Fix'+str(i),
@@ -782,7 +783,7 @@ for i in range(0,11,2):
 
 
 #TTableObject.remove_fixed_event(4)
-
+'''
 for item in TTableObject.dynamic_events:
         item.print_event()
         #print(item._unique_id)
@@ -806,6 +807,7 @@ def handle_input():
     global running, window_height, window_width, screen,PlannerButtons, UserEventGUI
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            TTableObject.save_data_CSV()
             running = False
 
         # Seperated Main input with GUI Input
@@ -854,7 +856,12 @@ def handle_input():
                     elif Value == 2:
                         Event = UserGUIObject.CreateEvent()
                         Event.print_event()
-                        UserGUIObject.Clear_Input() # Output 0/1 for Fix/Dym for adding
+                        # Output 0/1 for Fix/Dym for adding
+                        if UserGUIObject.Clear_Input():
+                            TTableObject.add_dynamic_event(Event)
+                        else:
+                            TTableObject.add_fixed_event(Event)
+
                         UserEventGUI = False
 
                 if event.button in [4, 5]:
