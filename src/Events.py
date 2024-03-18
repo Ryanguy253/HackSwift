@@ -1,6 +1,14 @@
 import datetime
 from enum import Enum
 
+def time_del_to_min(time_obj: datetime.timedelta) -> int:
+    total_minutes = int(time_obj.total_seconds() // 60)
+    return total_minutes
+
+def time_to_minutes(time_obj: datetime.time) -> int:
+    total_minutes = time_obj.hour * 60 + time_obj.minute
+    return total_minutes
+
 class Priority(Enum):
     LOW    = 0
     MEDIUM = 1
@@ -10,6 +18,10 @@ class Priority(Enum):
 class Event:
     # Assumption that events are only for a single day
     counter = 0
+    def __new__(cls, *args, **kwargs):
+        cls.counter += 1
+        return super().__new__(cls)
+    
     def __init__(self, name: str,
                  start_time: datetime.time, 
                  date: datetime.date, 
@@ -23,7 +35,6 @@ class Event:
         self._location = location
         self._description = description
         self._priority_tag = priority_tag
-        Event.counter += 1
     
     # Getters / Setters
     def get_name(self):
@@ -82,7 +93,7 @@ class FixedEvent(Event):
                  description: str, 
                  priority_tag: Priority = Priority.LOW):
 
-        Event().__init__(name, start_time, date, location, description, priority_tag)
+        Event.__init__(self, name, start_time, date, location, description, priority_tag)
         self._end_time = end_time
         self._recur_period = recur_period
 
@@ -92,8 +103,8 @@ class FixedEvent(Event):
     def get_next_date(self):
         return self._date + datetime.timedelta(days=self._recur_period)
     
-    def get_duration(self):
-        return self._end_time - self._start_time
+    def get_duration(self) -> int: 
+        return time_del_to_min(self._end_time - self._start_time)
     
     # Getters / Setters
     def get_end_time(self):
@@ -113,18 +124,18 @@ class FixedEvent(Event):
 class DynamicEvent(Event):
     def __init__(self, 
                  name: str, 
-                 duration: str, 
+                 duration: int, # In minutes
                  expiry_date: datetime.date, 
                  location: str, 
                  description: str, 
                  priority_tag: Priority = Priority.LOW):
 
-        Event().__init__(name, start_time=None, date=None, location=location, description=description, priority_tag=priority_tag)
+        Event.__init__(self, name, start_time=None, date=None, location=location, description=description, priority_tag=priority_tag)
         self._duration = duration
         self._expiry_date = expiry_date
 
     # Getters / Setters
-    def get_duration(self):
+    def get_duration(self) -> int:
         return self._duration
     
     def get_expiry_date(self):
