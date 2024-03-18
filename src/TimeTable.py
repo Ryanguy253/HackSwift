@@ -117,9 +117,8 @@ class TimeTable:
         for i, dynamic_event in enumerate(self.dynamic_events):
             for fixed_event in self.fixed_events:
                 if dynamic_event.get_date() == fixed_event.get_date():
-                    if (dyev_start_time_var[i] + dynamic_event.get_duration() > time_to_minutes(fixed_event.get_start_time())) and (dyev_start_time_var[i] < time_to_minutes(fixed_event.get_end_time())):
-                        model.Add(dyev_start_time_var[i] + dynamic_event.get_duration() <= time_to_minutes(fixed_event.get_start_time()))
-                        model.Add(dyev_start_time_var[i] >= time_to_minutes(fixed_event.get_end_time()))
+                    model.Add(dyev_start_time_var[i] + dynamic_event.get_duration() <= time_to_minutes(fixed_event.get_start_time())) # TODO refine
+                    model.Add(dyev_start_time_var[i] >= time_to_minutes(fixed_event.get_end_time()))
 
         # Solve the model
         status = solver.Solve(model)
