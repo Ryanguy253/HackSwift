@@ -26,6 +26,10 @@ Deep_Green= (0, 100, 0)
 Olive_Green= (128, 128, 0)
 Burgundy= (128, 0, 32)
 
+#Events
+DymEvents = []
+FixEvents = []
+
 #Testing
 Recty = 100
 Rect = (400,Recty,100,100)
@@ -176,7 +180,6 @@ def draw_dayDate(x, y):
         if (current_date.day == now.day):
             text_surface = datefont.render(day_DateString, True, (255, 0, 0))  # Change color to red
         screen.blit(text_surface, (x + (120 * i), y))
-
 
 # UserGUIClasses
 
@@ -658,7 +661,7 @@ class UserInputGUI(object):
         _Priority = Priority(int(self.DefDict['Priority'].text))
         Date = datetime.date(int(self.DefDict['Year'].text),int(self.DefDict['Month'].text),int(self.DefDict['Day'].text))
 
-        if self.Mode:
+        if self.Mode: ##self.mode = 1 means dynamic event
             EventDur = datetime.time(int(self.DymDict['DurHr'].text),int(self.DymDict['DurMin'].text))
 
             Event = DynamicEvent(EventName,EventDur,Date,EventLoc,EventDes,Priority)
