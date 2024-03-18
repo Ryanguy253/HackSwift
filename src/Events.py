@@ -76,7 +76,7 @@ class FixedEvent(Event):
                  location: str,
                  description: str,
                  priority_tag: Priority = Priority.LOW):
-        Event.__init__(name, start_time, date, location, description, priority_tag)
+        super().__init__(name, start_time, date, location, description, priority_tag)
         self._end_time = end_time
         self._recur_period = recur_period
         self._recur_cycle = recur_cycle
@@ -120,7 +120,7 @@ class DynamicEvent(Event):
                  location: str,
                  description: str,
                  priority_tag: Priority = Priority.LOW):
-        Event.__init__(name, start_time=None, date=None, location=location, description=description,
+        super().__init__(name=name, start_time=None, date=None, location=location, description=description,
                          priority_tag=priority_tag)
         self._duration = duration
         self._expiry_date = expiry_date
