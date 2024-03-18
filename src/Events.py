@@ -2,6 +2,15 @@ import datetime
 from enum import Enum
 
 
+
+def time_del_to_min(time_obj: datetime.timedelta) -> int:
+    total_minutes = int(time_obj.total_seconds() // 60)
+    return total_minutes
+
+def time_to_minutes(time_obj: datetime.time) -> int:
+    total_minutes = time_obj.hour * 60 + time_obj.minute
+    return total_minutes
+
 class Priority(Enum):
     LOW = 0
     MEDIUM = 1
@@ -11,6 +20,11 @@ class Priority(Enum):
 
 class Event:
     # Assumption that events are only for a single day
+    counter = 0
+    def __new__(cls, *args, **kwargs):
+        cls.counter += 1
+        return super().__new__(cls)
+    
     def __init__(self,name: str,
                  start_time: datetime.time,
                  end_time: datetime.time,
@@ -45,6 +59,16 @@ class Event:
 
     def get_priority(self):
         return self._priority_tag
+    
+    def get_priority_value(self):
+        return self._priority_tag.value
+
+    def get_counter(self):
+        return Event.counter
+    
+    def get_id(self):
+        return self._id
+    
 
     def get_end_time(self):
         return self._end_time
@@ -102,8 +126,9 @@ class FixedEvent(Event):
                  location: str,
                  description: str,
                  priority_tag: Priority = Priority.LOW):
-        super().__init__(name=name,start_time=start_time,date=date,location=location,description=description,
-                         priority_tag=priority_tag,end_time= end_time)
+
+        Event.__init__(self, name, start_time, end_time, date, location, description, priority_tag)
+        self._end_time = end_time
         self._recur_period = recur_period
         self._recur_cycle = recur_cycle
         self.priority_tag = priority_tag
@@ -113,10 +138,10 @@ class FixedEvent(Event):
 
     def get_next_date(self):
         return self._date + datetime.timedelta(days=self._recur_period)
-
-    def get_duration(self):
-        return self._end_time - self._start_time
-
+    
+    def get_duration(self) -> int: 
+        return time_to_minutes(self._end_time) - time_to_minutes(self._start_time)
+    
     # Getters / Setters
     def get_recur_period(self):
         return self._recur_period
@@ -136,20 +161,21 @@ class FixedEvent(Event):
 # Events that don't occur on a particular date / time, but have a duration
 # It's start_date and start_time are only set when the event is scheduled using the TimeTable class
 class DynamicEvent(Event):
-    def __init__(self,name: str,
-                 duration: datetime.time,
-                 expiry_date: datetime.date,
-                 location: str,
-                 description: str,
+    def __init__(self, 
+                 name: str, 
+                 duration: int, # In minutes
+                 expiry_date: datetime.date, 
+                 location: str, 
+                 description: str, 
                  priority_tag: Priority = Priority.LOW):
-        super().__init__(name=name, start_time=None, date=None, location=location, description=description,
-                         priority_tag=priority_tag,end_time=None)
+
+        Event.__init__(self, name, start_time=None, end_time=None, date=None, location=location, description=description, priority_tag=priority_tag)
         self._duration = duration
         self._expiry_date = expiry_date
         self.priority_tag = priority_tag
 
     # Getters / Setters
-    def get_duration(self):
+    def get_duration(self) -> int:
         return self._duration
 
     def get_expiry_date(self):
