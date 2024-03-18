@@ -676,7 +676,7 @@ class UserInputGUI(object):
         Date = datetime.date(int(self.DefDict['Year'].text),int(self.DefDict['Month'].text),int(self.DefDict['Day'].text))
 
         if self.Mode:
-            EventDur = datetime.time(int(self.DymDict['DurHr'].text),int(self.DymDict['DurMin'].text))
+            EventDur = time_to_minutes(datetime.time(int(self.DymDict['DurHr'].text),int(self.DymDict['DurMin'].text)))
 
             Event = DynamicEvent(name=EventName,
                                  duration=EventDur,

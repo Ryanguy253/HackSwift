@@ -180,11 +180,11 @@ class TimeTable:
                 # model.Add(dyev_start_time_var[j] + (dynamic_event.get_duration()) <= dyev_start_time_var[i])
 
         # Dynamic events should occur before their expiry date, and within 2 weeks
-        # for i, dynamic_event in enumerate(self.dynamic_events):
-        #     expiry_time_min = time_del_to_min(dynamic_event.get_expiry_date() - current_day)
-        #     if dynamic_event.get_expiry_date() != None: 
-        #         model.Add(dyev_start_time_var[i] + dynamic_event.get_duration() <= expiry_time_min)
-        #         model.Add(dyev_start_time_var[i] + dynamic_event.get_duration() <= 10080)
+        for i, dynamic_event in enumerate(self.dynamic_events):
+            expiry_time_min = time_del_to_min(dynamic_event.get_expiry_date() - current_day)
+            if dynamic_event.get_expiry_date() != None: 
+                model.Add(dyev_start_time_var[i] + dynamic_event.get_duration() <= expiry_time_min)
+                model.Add(dyev_start_time_var[i] + dynamic_event.get_duration() <= 10080)
 
         # Dynamic events should occur during 08:00 - 23:00 of each day
         for i, dynamic_event in enumerate(self.dynamic_events):
