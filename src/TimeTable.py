@@ -84,22 +84,25 @@ def testEvent(FixArray, DymArray):
                            priority_tag=Priority(i % 4))
         FixArray.append(Event)
 
-        Event = DynamicEvent(name='Dym' + str(a),
+        Event1 = DynamicEvent(name='Dym' + str(a),
                              duration=datetime.time(0, 30, 0),
                              expiry_date=datetime.datetime.now(),
-                             location='Fix' + str(i),
+                             location='Dym' + str(i),
                              description='Dym' + str(a),
                              priority_tag=Priority(a % 4))
-        Event._start_time = datetime.time(a, 0, 0)
-        Event._date = datetime.datetime.now()
-        DymArray.append(Event)
+        Event1._start_time = datetime.time(a, 0, 0)
+        Event1._date = datetime.datetime.now()
+        DymArray.append(Event1)
 
     for item in FixArray:
         item.print_event()
+
     for item in DymArray:
         item.print_event()
-
+        print(type(item))
+    print(type(DymArray[0]))
 class timetableBox():
+
     def __init__(self, x, y, height, width, Event,screen):
         box_image = pygame.Surface((height, width))
         self.x = x
