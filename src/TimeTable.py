@@ -4,7 +4,7 @@ import datetime
 from ortools.sat.python import cp_model
 from itertools import combinations, permutations
 from typing import List
-
+import csv
 import pygame
 from enum import Enum
 from datetime import date, time, timedelta
@@ -36,7 +36,131 @@ class TimeTable:
         self.fixed_events: List[FixedEvent] = []    # Contains FixedEvent objects which are not completed yet, and are recurring
         self.dynamic_events: List[DynamicEvent] = []  # Contains DynamicEvent objects which are not completed yet
         self.completed_events = []# Contains FixedEvent and DynamicEvent objects which are completed, 
+    @staticmethod
+    def data_get_priority(Item):
+        if Item == 'Priority.LOW':
+            return Priority(0)
+        elif Item == 'Priority.MEDIUM':
+            return Priority(1)
+        elif Item == 'Priority.HIGH':
+            return Priority(2)
+        else:
+            return Priority(3)
 
+    def load_data_CSV(self):
+        try:
+            with open('FixedEvent.csv', 'r') as csv_file:
+                csv_reader = csv.reader(csv_file)
+                next(csv_reader)
+                for line in csv_reader:
+                    Event = FixedEvent(name=line[0],
+                                       start_time=datetime.time(int(line[1]), int(line[2]), 0),
+                                       end_time=datetime.time(int(line[3]), int(line[4]), 0),
+                                       date=datetime.date(int(line[5]), int(line[6]), int(line[7])),
+                                       location=line[8],
+                                       description=line[9],
+                                       priority_tag=self.data_get_priority(line[10]),
+                                       recur_period=int(line[11]),
+                                       recur_cycle= int(line[12]))
+                    self.add_fixed_event(Event)
+            csv_file.close()
+        except FileNotFoundError:
+            with open('FixedEvent.csv', 'w', newline='') as new_file:
+                csv_writer = csv.writer(new_file)
+
+                line = ['Name','StartHour','StartMinute','EndHour','EndMinute','DateYear','DateMonth','DateDay',
+                        'Location','Description','Priority_Tag',
+                        'Recur_Period','Recur_Cycle']
+                csv_writer.writerow(line)
+                new_file.close()
+                return
+
+
+        try:
+            with open('DynamicEvent.csv', 'r') as csv_file:
+                csv_reader = csv.reader(csv_file)
+                next(csv_reader)
+                for line in csv_reader:
+                    Event = DynamicEvent(name=line[0],
+                                         location=line[8],
+                                         duration=datetime.time(int(line[11]), int(line[12])),
+                                         expiry_date=datetime.date(int(line[13]), int(line[14]), int(line[15])),
+                                         description=line[9],
+                                         priority_tag=self.data_get_priority(line[10]))
+
+                    Event.set_start_time(datetime.time(int(line[1]), int(line[2]), 0))
+                    Event.set_end_time(datetime.time(int(line[3]), int(line[4]),0))
+                    Event.set_date(datetime.date(int(line[5]), int(line[6]), int(line[7])))
+                    self.add_dynamic_event(Event)
+            csv_file.close()
+        except FileNotFoundError:
+            with open('DynamicEvent.csv', 'w', newline='') as new_file:
+                csv_writer = csv.writer(new_file)
+
+                line = ['Name','StartHour','StartMinute','EndHour','EndMinute','DateYear','DateMonth','DateDay',
+                        'Location','Description','Priority_Tag',
+                        'DurationHour','DurationMinute','ExpiryDateYear','ExpiryDateMonth','ExpiryDateDay']
+                csv_writer.writerow(line)
+                new_file.close()
+                csv_file.close()
+                return
+
+
+    def save_data_CSV(self):
+        with open('FixedEvent.csv', 'w', newline='') as new_file:
+            csv_writer = csv.writer(new_file)
+
+            line = ['Name', 'StartHour', 'StartMinute', 'EndHour', 'EndMinute', 'DateYear', 'DateMonth', 'DateDay',
+                    'Location', 'Description',
+                    'Priority_Tag', 'Recur_Period', 'Recur_Cycle']
+            csv_writer.writerow(line)
+
+            for item in self.fixed_events:
+                line = [item.get_name(),
+                        str(item.get_start_time().hour), str(item.get_start_time().minute),
+                        str(item.get_end_time().hour), str(item.get_end_time().minute),
+                        str(item.get_date().year), str(item.get_date().month), str(item.get_date().day),
+                        item.get_location(), item.get_description(),
+                        item.get_priority(), str(item.get_recur_period()), str(item.get_recur_cycle())]
+                csv_writer.writerow(line)
+            new_file.close()
+
+        with open('DynamicEvent.csv', 'w', newline='') as new_file:
+            csv_writer = csv.writer(new_file)
+
+            line = ['Name', 'StartHour', 'StartMinute', 'EndHour', 'EndMinute', 'DateYear', 'DateMonth', 'DateDay',
+                    'Location', 'Description',
+                    'Priority_Tag', 'DurationHour', 'DurationMinute', 'ExpiryDateYear', 'ExpiryDateMonth',
+                    'ExpiryDateDay']
+            csv_writer.writerow(line)
+
+            for item in self.dynamic_events:
+                #time = (datetime.datetime.combine(datetime.date(2024,1,1),
+                                                 #datetime.time(0,0,0))+item.get_duration()).time()
+                if item.get_end_time() == None:
+                    time = datetime.time(0,0,0)
+                else:
+                    time = item.get_end_time()
+
+                if item.get_start_time() == None:
+                    time1 = datetime.time(0,0,0)
+                else:
+                    time1 = item.get_start_time()
+
+                if item.get_date() == None:
+                    date = datetime.date(2024,1,1)
+                else:
+                    date = item.get_date()
+
+                line = [item.get_name(),
+                        str(time1.hour), str(time1.minute),
+                        str(time.hour), str(time.minute),
+                        str(date.year), str(date.month), str(date.day),
+                        item.get_location(), item.get_description(),
+                        item.get_priority(), str(item.get_duration().hour), str(item.get_duration().minute),
+                        str(item.get_expiry_date().year), str(item.get_expiry_date().month), str(item.get_expiry_date().day)]
+                csv_writer.writerow(line)
+            new_file.close()
     def sort_fixed_events(self):
         TNow = datetime.datetime.now()
         TempList = []
@@ -104,7 +228,7 @@ class TimeTable:
 
         end_date = monday_date + datetime.timedelta(days=7)
         for item in self.fixed_events:
-            if item.get_date() < end_date:
+            if datetime.datetime(item.get_date().year, item.get_date().month, item.get_date().day) < end_date:
                 output.append(item)
             else:
                 break
@@ -118,8 +242,8 @@ class TimeTable:
         self.sort_dynamic_events()
 
         end_date = monday_date + datetime.timedelta(days=7)
-        for item in self.fixed_events:
-            if item.get_date() < end_date:
+        for item in self.dynamic_events:
+            if datetime.datetime(item.get_date().year, item.get_date().month, item.get_date().day) < end_date:
                 output.append(item)
             else:
                 break

@@ -1,0 +1,2 @@
+Name,StartHour,StartMinute,EndHour,EndMinute,DateYear,DateMonth,DateDay,Location,Description,Priority_Tag,Recur_Period,Recur_Cycle
+rtyui,8,0,11,30,2024,3,19,qwe,qwe,Priority.LOW,1,1

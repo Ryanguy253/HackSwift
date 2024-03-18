@@ -5,6 +5,21 @@ from Events import *
 from TimeTable import TimeTable as TTable
 from TimeTable import *
 
+# #-need to fix
+# Traceback (most recent call last):
+#   File "C:\Users\user\PycharmProjects\HackSwift\src\main.py", line 1012, in <module>
+#     handle_input()
+#   File "C:\Users\user\PycharmProjects\HackSwift\src\main.py", line 899, in handle_input
+#     updateCombinedArray(TTableObject.get_fixed_events_by_week(datetime.date.today()), TTableObject.get_dynamic_events_by_week(datetime.date.today()))
+#   File "C:\Users\user\PycharmProjects\HackSwift\src\TimeTable.py", line 242, in get_dynamic_events_by_week
+#     self.sort_dynamic_events()
+#   File "C:\Users\user\PycharmProjects\HackSwift\src\TimeTable.py", line 182, in sort_dynamic_events
+#     TDiff = datetime.datetime.combine(item.get_date(),item.get_start_time())-TNow
+# TypeError: combine() argument 1 must be datetime.date, not None
+#
+# - if put today date in dynamic, cannot put expiry date that is past current time
+
+
 # Initialize pygame
 pygame.init()
 
@@ -718,6 +733,9 @@ class UserInputGUI(object):
 
 # Initialize Timetable
 TTableObject = TTable(150,50)
+TTableObject.load_data_CSV()
+
+
 # Loading Data from storage
 
 
@@ -816,6 +834,7 @@ def handle_input():
     global running, window_height, window_width, screen,PlannerButtons, UserEventGUI,timetable_y_pos
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
+            TTableObject.save_data_CSV()
             running = False
 
         # Seperated Main input with GUI Input
@@ -892,6 +911,8 @@ def handle_input():
                             TTableObject.add_dynamic_event(Event)
                         else:
                             TTableObject.add_fixed_event(Event)
+                        updateCombinedArray(TTableObject.get_fixed_events_by_week(datetime.date.today()), TTableObject.get_dynamic_events_by_week(datetime.date.today()))
+                        TTableObject.print_dynamic_chrono()
                         UserEventGUI = False
 
                 if event.button in [4, 5]:
@@ -926,8 +947,6 @@ def update():
             editButton.isClicked = False;
 
 
-testEvent(FixEvents, DymEvents)
-
 def updateCombinedArray(FixEvents,DymEvents):
     global combinedArray
     combinedArray = []
@@ -935,7 +954,6 @@ def updateCombinedArray(FixEvents,DymEvents):
     b = 0
     while (a < len(FixEvents) and b < len(DymEvents)):
         if (FixEvents[a]._date < DymEvents[b]._date):
-
             combinedArray.append((FixEvents[a]))
             a += 1
 
@@ -968,15 +986,16 @@ def draw():
 
     mouse_position = pygame.mouse.get_pos()
     if combinedArray:
-        current_day = combinedArray[0]._date.day
-        k = 0
+        current_day = combinedArray[0]._date.weekday()
+        k = current_day
         j = 0
         for i in range(len(combinedArray)):
-            if current_day != combinedArray[i]._date.day:
-                k += 1
+            print(len(combinedArray))
+            if current_day != combinedArray[i]._date.weekday():
+                k += (combinedArray[i]._date.weekday() - current_day)
                 j = 0
-                current_day = combinedArray[i]._date.day
-            hello = timetableBox((100 * k) + 150, (100 * j) + timetable_y_pos, 100, 100, combinedArray[i], screen)
+                current_day = combinedArray[i]._date.weekday()
+            hello = timetableBox((110 * k) + 150, (100 * j) + timetable_y_pos, 110, 110, combinedArray[i], screen)
             mouse_pos = pygame.mouse.get_pos()
             hello.isHovered = hello.is_hovered_over(mouse_pos)
             hello.draw(mouse_position)
@@ -1001,7 +1020,7 @@ def draw():
 
     if UserEventGUI:
         UserGUIObject.Draw()
-
+updateCombinedArray(TTableObject.get_fixed_events_by_week(datetime.date.today()), TTableObject.get_dynamic_events_by_week(datetime.date.today()))
 # Program Loop
 running = True
 while running:
