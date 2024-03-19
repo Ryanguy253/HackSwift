@@ -2,14 +2,15 @@ import datetime
 from enum import Enum
 
 
-
 def time_del_to_min(time_obj: datetime.timedelta) -> int:
     total_minutes = int(time_obj.total_seconds() // 60)
     return total_minutes
 
+
 def time_to_minutes(time_obj: datetime.time) -> int:
     total_minutes = time_obj.hour * 60 + time_obj.minute
     return total_minutes
+
 
 class Priority(Enum):
     LOW = 0
@@ -21,11 +22,12 @@ class Priority(Enum):
 class Event:
     # Assumption that events are only for a single day
     counter = 0
+
     def __new__(cls, *args, **kwargs):
         cls.counter += 1
         return super().__new__(cls)
-    
-    def __init__(self,name: str,
+
+    def __init__(self, name: str,
                  start_time: datetime.time,
                  end_time: datetime.time,
                  date: datetime.date,
@@ -59,16 +61,15 @@ class Event:
 
     def get_priority(self):
         return self._priority_tag
-    
+
     def get_priority_value(self):
         return self._priority_tag.value
 
     def get_counter(self):
         return Event.counter
-    
+
     def get_id(self):
         return self._id
-    
 
     def get_end_time(self):
         return self._end_time
@@ -96,28 +97,29 @@ class Event:
 
     # For Checking Events
     def print_event(self):
-        print(self.get_name(),self._date,self._start_time,self.get_priority())
+        print(self.get_name(), self._date, self._start_time, self.get_priority())
 
     # To be called by Dynamic Events to find End Time
-    def find_end_time(self,duration):
+    def find_end_time(self, duration):
         hours = duration.hour
         mins = duration.minute
         _StartTime = datetime.datetime.combine(self._date, self._start_time)
-        _TimeDelta = datetime.timedelta(hours=hours,minutes=mins)
+        _TimeDelta = datetime.timedelta(hours=hours, minutes=mins)
         return (_StartTime + _TimeDelta).time()
 
     # To be called by Fixed Events to find Duration
     def find_duration(self):
         _StartTime = datetime.datetime.combine(self._date, self._start_time)
         _EndTime = datetime.datetime.combine(self._date, self._end_time)
-        return (_EndTime-_StartTime)
+        return (_EndTime - _StartTime)
+
 
 # This actually violates Liskov Substitution Principle, but we're not gonna store events anyways, we're storing FixedEvents and DynamicEvents seperately
 # recurring_period is a number of days between each event instance
 # For example, if recurring_period is 7, the event will occur every week
 # If recurring_period is 0 or below, the event will not recur
 class FixedEvent(Event):
-    def __init__(self,name: str,
+    def __init__(self, name: str,
                  start_time: datetime.time,
                  end_time: datetime.time,
                  date: datetime.date,
@@ -126,7 +128,6 @@ class FixedEvent(Event):
                  location: str,
                  description: str,
                  priority_tag: Priority = Priority.LOW):
-
         Event.__init__(self, name, start_time, end_time, date, location, description, priority_tag)
         self._end_time = end_time
         self._recur_period = recur_period
@@ -138,10 +139,10 @@ class FixedEvent(Event):
 
     def get_next_date(self):
         return self._date + datetime.timedelta(days=self._recur_period)
-    
-    def get_duration(self) -> int: 
+
+    def get_duration(self) -> int:
         return time_to_minutes(self._end_time) - time_to_minutes(self._start_time)
-    
+
     # Getters / Setters
     def get_recur_period(self):
         return self._recur_period
@@ -156,20 +157,18 @@ class FixedEvent(Event):
         self._recur_cycle = recurring_cycle
 
 
-
-
 # Events that don't occur on a particular date / time, but have a duration
 # It's start_date and start_time are only set when the event is scheduled using the TimeTable class
 class DynamicEvent(Event):
-    def __init__(self, 
-                 name: str, 
-                 duration: int, # In minutes
-                 expiry_date: datetime.date, 
-                 location: str, 
-                 description: str, 
+    def __init__(self,
+                 name: str,
+                 duration: int,  # In minutes
+                 expiry_date: datetime.date,
+                 location: str,
+                 description: str,
                  priority_tag: Priority = Priority.LOW):
-
-        Event.__init__(self, name, start_time=None, end_time=None, date=None, location=location, description=description, priority_tag=priority_tag)
+        Event.__init__(self, name, start_time=None, end_time=None, date=None, location=location,
+                       description=description, priority_tag=priority_tag)
         self._duration = duration
         self._expiry_date = expiry_date
         self.priority_tag = priority_tag

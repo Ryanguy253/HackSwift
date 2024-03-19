@@ -380,7 +380,7 @@ class UserInputGUI(object):
 
     DD_Mins = [00,15,30,45]
     DD_Hours = [x for x in range(24)]
-    DD_Year = [x + 2020 for x in range(50)]
+    DD_Year = [x + 2024 for x in range(50)]
     DD_Month = [x + 1 for x in range(12)]
     DD_Days = [x + 1 for x in range(31)]
     DD_MthDay = [31,28,31,30,31,30,31,31,30,31,30,31]
@@ -546,7 +546,7 @@ class UserInputGUI(object):
                                                       f'          N - N Times', True, 'White')
                 screen.blit(RecurText_Surface,
                             (Recurrent_Class.x - 4 * font_size, Recurrent_Class.y + 1.1 * font_size))
-                RecurText_Surface = Small_font.render(f'Perid: 1 - Every Day'
+                RecurText_Surface = Small_font.render(f'Period: 1 - Every Day'
                                                       f'       7 - Every Week', True, 'White')
                 screen.blit(RecurText_Surface,
                             (Recurrent_Class.x - 4 * font_size, Recurrent_Class.y + 1.6 * font_size))
@@ -640,7 +640,7 @@ class UserInputGUI(object):
                     Leap = 0
                 MthDay = int(Month.text) - 1
                 MaxDays = self.DD_MthDay[MthDay] if MthDay != 1 else (self.DD_MthDay[MthDay] + Leap)
-                print(MaxDays)
+                #print(MaxDays)
                 Day.MaxCycle = MaxDays
                 Day.Cycle = 0
                 Day.text = '01'
@@ -990,12 +990,12 @@ def draw():
         k = current_day
         j = 0
         for i in range(len(combinedArray)):
-            print(len(combinedArray))
+            #print(len(combinedArray))
             if current_day != combinedArray[i]._date.weekday():
                 k += (combinedArray[i]._date.weekday() - current_day)
                 j = 0
                 current_day = combinedArray[i]._date.weekday()
-            hello = timetableBox((110 * k) + 150, (100 * j) + timetable_y_pos, 110, 110, combinedArray[i], screen)
+            hello = timetableBox((120 * k ) + 150, (120 * j) + timetable_y_pos, 110, 110, combinedArray[i], screen)
             mouse_pos = pygame.mouse.get_pos()
             hello.isHovered = hello.is_hovered_over(mouse_pos)
             hello.draw(mouse_position)

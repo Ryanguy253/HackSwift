@@ -7,6 +7,7 @@ from typing import List
 import csv
 import pygame
 from enum import Enum
+from math import floor
 from datetime import date, time, timedelta
 
 
@@ -21,9 +22,11 @@ def time_del_to_min(time_obj: datetime.timedelta) -> int:
     total_minutes = int(time_obj.total_seconds() // 60)
     return total_minutes
 
+
 def time_to_minutes(time_obj: datetime.time) -> int:
     total_minutes = time_obj.hour * 60 + time_obj.minute
     return total_minutes
+
 
 class TimeTable:
     def __init__(self, x_pos, y_pos):
@@ -33,9 +36,11 @@ class TimeTable:
         self.width = 0
         self.height = 0
         self.events = 0
-        self.fixed_events: List[FixedEvent] = []    # Contains FixedEvent objects which are not completed yet, and are recurring
+        self.fixed_events: List[
+            FixedEvent] = []  # Contains FixedEvent objects which are not completed yet, and are recurring
         self.dynamic_events: List[DynamicEvent] = []  # Contains DynamicEvent objects which are not completed yet
-        self.completed_events = []# Contains FixedEvent and DynamicEvent objects which are completed, 
+        self.completed_events = []  # Contains FixedEvent and DynamicEvent objects which are completed,
+
     @staticmethod
     def data_get_priority(Item):
         if Item == 'Priority.LOW':
@@ -61,35 +66,35 @@ class TimeTable:
                                        description=line[9],
                                        priority_tag=self.data_get_priority(line[10]),
                                        recur_period=int(line[11]),
-                                       recur_cycle= int(line[12]))
+                                       recur_cycle=int(line[12]))
                     self.add_fixed_event(Event)
             csv_file.close()
         except FileNotFoundError:
             with open('FixedEvent.csv', 'w', newline='') as new_file:
                 csv_writer = csv.writer(new_file)
 
-                line = ['Name','StartHour','StartMinute','EndHour','EndMinute','DateYear','DateMonth','DateDay',
-                        'Location','Description','Priority_Tag',
-                        'Recur_Period','Recur_Cycle']
+                line = ['Name', 'StartHour', 'StartMinute', 'EndHour', 'EndMinute', 'DateYear', 'DateMonth', 'DateDay',
+                        'Location', 'Description', 'Priority_Tag',
+                        'Recur_Period', 'Recur_Cycle']
                 csv_writer.writerow(line)
                 new_file.close()
                 return
-
 
         try:
             with open('DynamicEvent.csv', 'r') as csv_file:
                 csv_reader = csv.reader(csv_file)
                 next(csv_reader)
                 for line in csv_reader:
+                    duration = int(line[11])*60 + int(line[12])
                     Event = DynamicEvent(name=line[0],
                                          location=line[8],
-                                         duration=datetime.time(int(line[11]), int(line[12])),
+                                         duration=duration,
                                          expiry_date=datetime.date(int(line[13]), int(line[14]), int(line[15])),
                                          description=line[9],
                                          priority_tag=self.data_get_priority(line[10]))
 
                     Event.set_start_time(datetime.time(int(line[1]), int(line[2]), 0))
-                    Event.set_end_time(datetime.time(int(line[3]), int(line[4]),0))
+                    Event.set_end_time(datetime.time(int(line[3]), int(line[4]), 0))
                     Event.set_date(datetime.date(int(line[5]), int(line[6]), int(line[7])))
                     self.add_dynamic_event(Event)
             csv_file.close()
@@ -97,14 +102,13 @@ class TimeTable:
             with open('DynamicEvent.csv', 'w', newline='') as new_file:
                 csv_writer = csv.writer(new_file)
 
-                line = ['Name','StartHour','StartMinute','EndHour','EndMinute','DateYear','DateMonth','DateDay',
-                        'Location','Description','Priority_Tag',
-                        'DurationHour','DurationMinute','ExpiryDateYear','ExpiryDateMonth','ExpiryDateDay']
+                line = ['Name', 'StartHour', 'StartMinute', 'EndHour', 'EndMinute', 'DateYear', 'DateMonth', 'DateDay',
+                        'Location', 'Description', 'Priority_Tag',
+                        'DurationHour', 'DurationMinute', 'ExpiryDateYear', 'ExpiryDateMonth', 'ExpiryDateDay']
                 csv_writer.writerow(line)
                 new_file.close()
                 csv_file.close()
                 return
-
 
     def save_data_CSV(self):
         with open('FixedEvent.csv', 'w', newline='') as new_file:
@@ -135,40 +139,44 @@ class TimeTable:
             csv_writer.writerow(line)
 
             for item in self.dynamic_events:
-                #time = (datetime.datetime.combine(datetime.date(2024,1,1),
-                                                 #datetime.time(0,0,0))+item.get_duration()).time()
+                # time = (datetime.datetime.combine(datetime.date(2024,1,1),
+                # datetime.time(0,0,0))+item.get_duration()).time()
                 if item.get_end_time() == None:
-                    time = datetime.time(0,0,0)
+                    time = datetime.time(0, 0, 0)
                 else:
                     time = item.get_end_time()
 
                 if item.get_start_time() == None:
-                    time1 = datetime.time(0,0,0)
+                    time1 = datetime.time(0, 0, 0)
                 else:
                     time1 = item.get_start_time()
 
                 if item.get_date() == None:
-                    date = datetime.date(2024,1,1)
+                    date = datetime.date(2024, 1, 1)
                 else:
                     date = item.get_date()
+
+                timeDuration = datetime.time(floor(item.find_duration().seconds/3600),floor(item.find_duration().seconds/60)%60)
 
                 line = [item.get_name(),
                         str(time1.hour), str(time1.minute),
                         str(time.hour), str(time.minute),
                         str(date.year), str(date.month), str(date.day),
                         item.get_location(), item.get_description(),
-                        item.get_priority(), str(item.get_duration().hour), str(item.get_duration().minute),
-                        str(item.get_expiry_date().year), str(item.get_expiry_date().month), str(item.get_expiry_date().day)]
+                        item.get_priority(), str(timeDuration.hour), str(timeDuration.minute),
+                        str(item.get_expiry_date().year), str(item.get_expiry_date().month),
+                        str(item.get_expiry_date().day)]
                 csv_writer.writerow(line)
             new_file.close()
+
     def sort_fixed_events(self):
         TNow = datetime.datetime.now()
         TempList = []
         OutputList = []
         for item in self.fixed_events:
-            TDiff = datetime.datetime.combine(item.get_date(),item.get_start_time())-TNow
-            TimeTillEvent = TDiff.days * (24*60*60) + TDiff.seconds
-            TempList.append((TimeTillEvent,item))
+            TDiff = datetime.datetime.combine(item.get_date(), item.get_start_time()) - TNow
+            TimeTillEvent = TDiff.days * (24 * 60 * 60) + TDiff.seconds
+            TempList.append((TimeTillEvent, item))
         TempList.sort()
         for item in TempList:
             OutputList.append(item[1])
@@ -179,9 +187,9 @@ class TimeTable:
         TempList = []
         OutputList = []
         for item in self.dynamic_events:
-            TDiff = datetime.datetime.combine(item.get_date(),item.get_start_time())-TNow
-            TimeTillEvent = TDiff.days * (24*60*60) + TDiff.seconds
-            TempList.append((TimeTillEvent,item))
+            TDiff = datetime.datetime.combine(item.get_date(), item.get_start_time()) - TNow
+            TimeTillEvent = TDiff.days * (24 * 60 * 60) + TDiff.seconds
+            TempList.append((TimeTillEvent, item))
         TempList.sort()
         for item in TempList:
             OutputList.append(item[1])
@@ -192,12 +200,20 @@ class TimeTable:
         self.id_counter += 1
         self.fixed_events.append(event)
         self.schedule_dynamic_events()
+        # for item in self.dynamic_events:
+        #     eventDuration = datetime.time(floor(item.get_duration()/60),item.get_duration()%60,0)
+        #     item._end_time = item.find_end_time(eventDuration)
 
     def add_dynamic_event(self, event: DynamicEvent):
+        if event.get_expiry_date() <= datetime.date.today():
+            return
         event._unique_id = self.id_counter
         self.dynamic_events.append(event)
         self.id_counter += 1
         self.schedule_dynamic_events()
+        for item in self.dynamic_events:
+            eventDuration = datetime.time(floor(item.get_duration() / 60), item.get_duration() % 60, 0)
+            item._end_time = item.find_end_time(eventDuration)
 
     def remove_fixed_event(self, id: int):
         if len(self.fixed_events) == 0:
@@ -248,10 +264,10 @@ class TimeTable:
             else:
                 break
         return output
-    
+
     def get_occupied_time_ranges(self):
         pass
-        
+
     def print_dynamic_chrono(self):
         # Prints DynamicEvent objects in the timetable in chronological order, seperated by newlines per event.
         dynamic_counter = 0
@@ -259,29 +275,35 @@ class TimeTable:
         # Print header
         print("Dynamic Events:")
         print("Name - Date - Start Time - Duration (mins) - Location - Description - Priority")
-        dy_events = sorted(self.dynamic_events, key=lambda x: x.get_date() if x.get_date() != None else datetime.date(1, 1, 1))
-        fx_events = sorted(self.fixed_events, key=lambda x: x.get_date() if x.get_date() != None else datetime.date(1, 1, 1))
+        dy_events = sorted(self.dynamic_events,
+                           key=lambda x: x.get_date() if x.get_date() != None else datetime.date(1, 1, 1))
+        fx_events = sorted(self.fixed_events,
+                           key=lambda x: x.get_date() if x.get_date() != None else datetime.date(1, 1, 1))
         while dynamic_counter < len(dy_events) and fixed_counter < len(fx_events):
             if dy_events[dynamic_counter].get_date() < fx_events[fixed_counter].get_date():
-                print(f"{dy_events[dynamic_counter].get_name()} - {dy_events[dynamic_counter].get_date()} - {dy_events[dynamic_counter].get_start_time()} - {dy_events[dynamic_counter].get_duration()} - {dy_events[dynamic_counter].get_location()} - {dy_events[dynamic_counter].get_description()} - {dy_events[dynamic_counter].get_priority()}")
+                print(
+                    f"{dy_events[dynamic_counter].get_name()} - {dy_events[dynamic_counter].get_date()} - {dy_events[dynamic_counter].get_start_time()} - {dy_events[dynamic_counter].get_duration()} - {dy_events[dynamic_counter].get_location()} - {dy_events[dynamic_counter].get_description()} - {dy_events[dynamic_counter].get_priority()}")
                 dynamic_counter += 1
             elif dy_events[dynamic_counter].get_date() > fx_events[fixed_counter].get_date():
-                print(f"{fx_events[fixed_counter].get_name()} - {fx_events[fixed_counter].get_date()} - {fx_events[fixed_counter].get_start_time()} - {fx_events[fixed_counter].get_duration()} - {fx_events[fixed_counter].get_location()} - {fx_events[fixed_counter].get_description()} - {fx_events[fixed_counter].get_priority()}")
+                print(
+                    f"{fx_events[fixed_counter].get_name()} - {fx_events[fixed_counter].get_date()} - {fx_events[fixed_counter].get_start_time()} - {fx_events[fixed_counter].get_duration()} - {fx_events[fixed_counter].get_location()} - {fx_events[fixed_counter].get_description()} - {fx_events[fixed_counter].get_priority()}")
                 fixed_counter += 1
             elif dy_events[dynamic_counter].get_start_time() < fx_events[fixed_counter].get_start_time():
-                print(f"{dy_events[dynamic_counter].get_name()} - {dy_events[dynamic_counter].get_date()} - {dy_events[dynamic_counter].get_start_time()} - {dy_events[dynamic_counter].get_duration()} - {dy_events[dynamic_counter].get_location()} - {dy_events[dynamic_counter].get_description()} - {dy_events[dynamic_counter].get_priority()}")
+                print(
+                    f"{dy_events[dynamic_counter].get_name()} - {dy_events[dynamic_counter].get_date()} - {dy_events[dynamic_counter].get_start_time()} - {dy_events[dynamic_counter].get_duration()} - {dy_events[dynamic_counter].get_location()} - {dy_events[dynamic_counter].get_description()} - {dy_events[dynamic_counter].get_priority()}")
                 dynamic_counter += 1
             else:
-                print(f"{fx_events[fixed_counter].get_name()} - {fx_events[fixed_counter].get_date()} - {fx_events[fixed_counter].get_start_time()} - {fx_events[fixed_counter].get_duration()} - {fx_events[fixed_counter].get_location()} - {fx_events[fixed_counter].get_description()} - {fx_events[fixed_counter].get_priority()}")
+                print(
+                    f"{fx_events[fixed_counter].get_name()} - {fx_events[fixed_counter].get_date()} - {fx_events[fixed_counter].get_start_time()} - {fx_events[fixed_counter].get_duration()} - {fx_events[fixed_counter].get_location()} - {fx_events[fixed_counter].get_description()} - {fx_events[fixed_counter].get_priority()}")
                 fixed_counter += 1
         while dynamic_counter < len(dy_events):
-            print(f"{dy_events[dynamic_counter].get_name()} - {dy_events[dynamic_counter].get_date()} - {dy_events[dynamic_counter].get_start_time()} - {dy_events[dynamic_counter].get_duration()} - {dy_events[dynamic_counter].get_location()} - {dy_events[dynamic_counter].get_description()} - {dy_events[dynamic_counter].get_priority()}")
+            print(
+                f"{dy_events[dynamic_counter].get_name()} - {dy_events[dynamic_counter].get_date()} - {dy_events[dynamic_counter].get_start_time()} - {dy_events[dynamic_counter].get_duration()} - {dy_events[dynamic_counter].get_location()} - {dy_events[dynamic_counter].get_description()} - {dy_events[dynamic_counter].get_priority()}")
             dynamic_counter += 1
         while fixed_counter < len(fx_events):
-            print(f"{fx_events[fixed_counter].get_name()} - {fx_events[fixed_counter].get_date()} - {fx_events[fixed_counter].get_start_time()} - {fx_events[fixed_counter].get_duration()} - {fx_events[fixed_counter].get_location()} - {fx_events[fixed_counter].get_description()} - {fx_events[fixed_counter].get_priority()}")
+            print(
+                f"{fx_events[fixed_counter].get_name()} - {fx_events[fixed_counter].get_date()} - {fx_events[fixed_counter].get_start_time()} - {fx_events[fixed_counter].get_duration()} - {fx_events[fixed_counter].get_location()} - {fx_events[fixed_counter].get_description()} - {fx_events[fixed_counter].get_priority()}")
             fixed_counter += 1
-        
-        
 
     def schedule_dynamic_events(self):
         current_day = datetime.date.today()
@@ -293,7 +315,8 @@ class TimeTable:
         # for i in range(len(self.dynamic_events)):
         random.shuffle(self.dynamic_events)
         # Define variables
-        dyev_start_time_var = [model.NewIntVar(0, 10080, dynamic_event.get_name()) for dynamic_event in self.dynamic_events]
+        dyev_start_time_var = [model.NewIntVar(0, 10080, dynamic_event.get_name()) for dynamic_event in
+                               self.dynamic_events]
 
         # Define constraints
         # No two dynamic events can overlap
@@ -306,22 +329,20 @@ class TimeTable:
         # Dynamic events should occur before their expiry date, and within 2 weeks
         for i, dynamic_event in enumerate(self.dynamic_events):
             expiry_time_min = time_del_to_min(dynamic_event.get_expiry_date() - current_day)
-            if dynamic_event.get_expiry_date() != None: 
+            if dynamic_event.get_expiry_date() != None:
                 model.Add(dyev_start_time_var[i] + dynamic_event.get_duration() <= expiry_time_min)
                 model.Add(dyev_start_time_var[i] + dynamic_event.get_duration() <= 10080)
 
         # Dynamic events should occur during 08:00 - 23:00 of each day
         for i, dynamic_event in enumerate(self.dynamic_events):
-            
             var_mod_begin = model.NewIntVar(0, 1339, dynamic_event.get_name() + "_mod_begin")
-            var_mod_end =   model.NewIntVar(0, 1339, dynamic_event.get_name() + "_mod_end")
+            var_mod_end = model.NewIntVar(0, 1339, dynamic_event.get_name() + "_mod_end")
 
-            model.AddModuloEquality(var_mod_begin ,dyev_start_time_var[i], 1440)
-            model.AddModuloEquality(var_mod_end ,(dyev_start_time_var[i] + dynamic_event.get_duration()), 1440)
+            model.AddModuloEquality(var_mod_begin, dyev_start_time_var[i], 1440)
+            model.AddModuloEquality(var_mod_end, (dyev_start_time_var[i] + dynamic_event.get_duration()), 1440)
 
             model.Add(var_mod_begin >= time_to_minutes(datetime.time(8, 0)))
             model.Add(var_mod_end <= time_to_minutes(datetime.time(23, 0)))
-
 
         # Dynamic events should not overlap with ANY fixed events
         for i, dynamic_event in enumerate(self.dynamic_events):
@@ -337,9 +358,12 @@ class TimeTable:
                     # (StartDy > EndFx) or (EndDy < StartFx) means no overlap
                     var_left_cond = model.NewBoolVar(dynamic_event.get_name() + "_left_cond")
                     var_right_cond = model.NewBoolVar(dynamic_event.get_name() + "_right_cond")
-                    
-                    model.Add(dyev_start_time_var[i] > fixed_event_end_time).OnlyEnforceIf(var_left_cond) # DyEv starts before FeEv
-                    model.Add(dyev_start_time_var[i] + dynamic_event.get_duration() < fixed_event_start_time).OnlyEnforceIf(var_right_cond)
+
+                    model.Add(dyev_start_time_var[i] > fixed_event_end_time).OnlyEnforceIf(
+                        var_left_cond)  # DyEv starts before FeEv
+                    model.Add(
+                        dyev_start_time_var[i] + dynamic_event.get_duration() < fixed_event_start_time).OnlyEnforceIf(
+                        var_right_cond)
 
                     model.AddBoolOr([var_left_cond, var_right_cond])
 
@@ -406,11 +430,11 @@ def testEvent(FixArray, DymArray):
         FixArray.append(Event)
 
         Event1 = DynamicEvent(name='Dym' + str(a),
-                             duration=datetime.time(0, 30, 0),
-                             expiry_date=datetime.datetime.now(),
-                             location='Dym' + str(i),
-                             description='Dym' + str(a),
-                             priority_tag=Priority(a % 4))
+                              duration=datetime.time(0, 30, 0),
+                              expiry_date=datetime.datetime.now(),
+                              location='Dym' + str(i),
+                              description='Dym' + str(a),
+                              priority_tag=Priority(a % 4))
         Event1._start_time = datetime.time(a, 0, 0)
         Event1._date = datetime.datetime.now()
         DymArray.append(Event1)
@@ -422,9 +446,11 @@ def testEvent(FixArray, DymArray):
         item.print_event()
         print(type(item))
     print(type(DymArray[0]))
+
+
 class timetableBox():
 
-    def __init__(self, x, y, height, width, Event,screen):
+    def __init__(self, x, y, height, width, Event, screen):
         box_image = pygame.Surface((height, width))
         self.x = x
         self.y = y
@@ -442,11 +468,11 @@ class timetableBox():
         self.locationText = Event.get_location()
         self.descriptionText = Event.get_description()
         self.isHovered = False
-        #self.end_timeText =
-        #self.durationText =
-        #self.expiry_dateText =
+        # self.end_timeText =
+        # self.durationText =
+        # self.expiry_dateText =
 
-    def draw(self,mouse_position):
+    def draw(self, mouse_position):
         Yellow = (255, 255, 0)
         Green = (0, 255, 0)
         Red = (255, 0, 0)
@@ -487,11 +513,11 @@ class timetableBox():
             self.screen.blit(text_surface, text_rect)
 
             text_surface = self.font.render(str(self.start_timeText), True, (0, 0, 0))
-            text_rect = text_surface.get_rect(midtop=(self.rect.centerx, self.rect.centery -0))
+            text_rect = text_surface.get_rect(midtop=(self.rect.centerx, self.rect.centery - 0))
             self.screen.blit(text_surface, text_rect)
 
             text_surface = self.font.render(str(self.locationText), True, (0, 0, 0))
-            text_rect = text_surface.get_rect(midtop=(self.rect.centerx, self.rect.centery + 20 ))
+            text_rect = text_surface.get_rect(midtop=(self.rect.centerx, self.rect.centery + 20))
             self.screen.blit(text_surface, text_rect)
 
     def split_text_into_lines(self, text, font, max_width):
@@ -506,9 +532,6 @@ class timetableBox():
                 current_line = word + " "
         lines.append(current_line)  # Add the last line
         return lines
-
-
-
 
     def is_hovered_over(self, mouse_pos):
         button_rect = pygame.Rect(self.x, self.y, self.width, self.height)
